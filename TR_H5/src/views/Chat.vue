@@ -42,6 +42,12 @@ const sendMessage = () => {
     const msg = inputMessage.value.trim()
     if (!msg || isStreaming.value) return
 
+    // 提取最近 10 轮对话历史（20 条消息）
+    const history = messages.value.slice(-20).map(m => ({
+        role: m.role,
+        content: m.content
+    }))
+
     messages.value.push({
         id: Date.now(),
         role: 'user',
@@ -50,10 +56,10 @@ const sendMessage = () => {
     inputMessage.value = ''
     scrollToBottom()
 
-    fetchAIResponse(msg)
+    fetchAIResponse(msg, history)
 }
 
-const fetchAIResponse = (query) => {
+const fetchAIResponse = (query, history = []) => {
     isStreaming.value = true
 
     messages.value.push({
@@ -65,7 +71,7 @@ const fetchAIResponse = (query) => {
     const idx = messages.value.length - 1
     scrollToBottom()
 
-    fetchStream('chat', { message: query }, (line) => {
+    fetchStream('chat', { message: query, history: history }, (line) => {
         if (line.startsWith('event:') || line.startsWith(':')) return
         if (line.startsWith('data:')) {
             const jsonStr = line.slice(5).trim()

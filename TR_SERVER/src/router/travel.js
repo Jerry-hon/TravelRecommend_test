@@ -32,14 +32,14 @@ router.post('/recommend', async (req, res) => {
 });
 
 router.post('/chat', async (req, res) => {
-  const {message} = req.body;
+  const {message, history} = req.body;
   if(!message) {
     return res.status(400).json({ success: false, error: 'Message is required' });
   }
 
   const stream = createStreamResponse(res);
 
-  const result = await travelService.chat(message, (chunk) => {
+  const result = await travelService.chat(message, history || [], (chunk) => {
     stream.send({type: 'chunk', content: chunk} );
   });
   stream.send({type: 'complete', data: result});

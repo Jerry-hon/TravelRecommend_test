@@ -87,7 +87,7 @@ const onChange = (event) => {
         <div class="page-content">
             <van-notice-bar
                 left-icon="info-o"
-                text="项目展示"
+                text="HJY项目展示"
                 style="margin-bottom: 5px;margin-top: 5px;border-radius: 3;"
                 />
 

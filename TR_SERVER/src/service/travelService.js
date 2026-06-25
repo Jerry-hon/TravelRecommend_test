@@ -1,5 +1,5 @@
 import {ChatOpenAI} from '@langchain/openai';
-import {convertToChunk, HumanMessage, SystemMessage} from '@langchain/core/messages';
+import {convertToChunk, HumanMessage, SystemMessage, AIMessage} from '@langchain/core/messages';
 import 'dotenv/config';
 
 class TravelService {
@@ -110,9 +110,16 @@ class TravelService {
     ]
   }
 
-  async chat(message, streamCallback) {
-    const messages = [new SystemMessage('你是一个专业的旅行规划师，用中文回答用户关于旅游的问题。'), 
-                      new HumanMessage(message)];
+  async chat(message, history, streamCallback) {
+    // 构建带历史记录的消息列表，历史取最近 20 条（10 轮对话）
+    const historyMessages = (history || []).slice(-20).map(msg => {
+      return msg.role === 'user' ? new HumanMessage(msg.content) : new AIMessage(msg.content);
+    });
+    const messages = [
+      new SystemMessage('你是一个专业的旅行规划师，用中文回答用户关于旅游的问题。'),
+      ...historyMessages,
+      new HumanMessage(message)
+    ];
 
     try {
       const stream = await this.llm.stream(messages);
