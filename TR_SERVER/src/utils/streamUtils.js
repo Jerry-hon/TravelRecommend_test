@@ -13,7 +13,7 @@ export const createStreamResponse = (res) => {
     },
     end: () => {
         try{
-            res.write('event: END\n\n"data":{"done":true}\n\n');
+            res.write('event: done\ndata:{"done":true}\n\n');
             res.end();
         }catch(error){
             console.error('Error ending stream:', error);

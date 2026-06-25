@@ -77,11 +77,11 @@ const fetchAIResponse = (query, history = []) => {
             const jsonStr = line.slice(5).trim()
             try {
                 const parsed = JSON.parse(jsonStr)
-                if (parsed.done) return
+                if (parsed.done || parsed.type === 'complete') return
                 const content = parsed.content || parsed.message || ''
                 if (content) messages.value[idx].content += content
             } catch {
-                messages.value[idx].content += jsonStr
+                console.error('JSON 解析失败')
             }
             scrollToBottom()
         }
