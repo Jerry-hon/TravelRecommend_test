@@ -1,5 +1,6 @@
 import express from 'express';
 import travelRouter from './router/travel.js';
+import userRouter from './router/user.js';
 import 'dotenv/config';
 import cors from 'cors';
 
@@ -19,6 +20,7 @@ app.get('/api/heartbeat', (req, res) => {
 });
 
 app.use('/api/travel', travelRouter);
+app.use('/api/user', userRouter);
 
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);

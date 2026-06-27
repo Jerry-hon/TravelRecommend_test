@@ -66,4 +66,26 @@ export async function fetchStream(url, data, onChunk, onComplete, onError) {
     }
 }
 
+// 用户相关 API（baseURL 为 /api/user）
+const userRequest = axios.create({
+    baseURL: '/api/user',
+    timeout: 10000,
+    headers: {
+        'Content-Type': 'application/json'
+    }
+})
+
+userRequest.interceptors.response.use(
+    response => response.data,
+    error => Promise.reject(error)
+)
+
+export function userPost(url, data) {
+    return userRequest.post(url, data)
+}
+
+export function userGet(url) {
+    return userRequest.get(url)
+}
+
 export default request
