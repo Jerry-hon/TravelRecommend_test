@@ -25,7 +25,19 @@ const destinationColumns = ref([
     {
         text: '广州',
         value: '广州'
-    }
+    },
+    {
+        text: '深圳',
+        value: '深圳'
+    },
+    {
+        text: '成都',
+        value: '成都'
+    },
+    {
+        text: '西安',
+        value: '西安'
+    },
 ])
 
 const onConfirm = ({ selectedValues }) => {
