@@ -66,13 +66,21 @@ export async function fetchStream(url, data, onChunk, onComplete, onError) {
     }
 }
 
-// 用户相关 API（baseURL 为 /api/user）
+// 用户相关
 const userRequest = axios.create({
     baseURL: '/api/user',
     timeout: 10000,
     headers: {
         'Content-Type': 'application/json'
     }
+})
+
+userRequest.interceptors.request.use(config => {
+    const token = localStorage.getItem('token')
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`
+    }
+    return config
 })
 
 userRequest.interceptors.response.use(
@@ -86,6 +94,40 @@ export function userPost(url, data) {
 
 export function userGet(url) {
     return userRequest.get(url)
+}
+
+// 规划方案的处理
+const planRequest = axios.create({
+    baseURL: '/api/plan',
+    timeout: 10000,
+    headers: {
+        'Content-Type': 'application/json'
+    }
+})
+
+planRequest.interceptors.request.use(config => {
+    const token = localStorage.getItem('token')
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`
+    }
+    return config
+})
+
+planRequest.interceptors.response.use(
+    response => response.data,
+    error => Promise.reject(error)
+)
+
+export function planPost(url, data) {
+    return planRequest.post(url, data)
+}
+
+export function planGet(url) {
+    return planRequest.get(url)
+}
+
+export function planDelete(id) {
+    return planRequest.delete(`/${id}`)
 }
 
 export default request

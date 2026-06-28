@@ -1,8 +1,9 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { showToast } from 'vant'
-import { userPost } from '../utils/request'
+import { showToast, showConfirmDialog } from 'vant'
+import { userPost, userGet } from '../utils/request'
+import { planGet, planDelete } from '../utils/request'
 
 const active = ref(2)
 const router = useRouter()
@@ -11,16 +12,65 @@ const sms = ref('')
 const nickname = ref('')
 const isLogin = ref(false)
 const cooldown = ref(0)
-let timer = null
+const savedPlans = ref([])
+let smsTimer = null
+let longPressTimer = null
+
+const goBack = () => {
+    router.back()
+}
+
+const onTouchStart = (plan) => {
+    longPressTimer = setTimeout(async () => {
+        try {
+            await showConfirmDialog({
+                title: '确认删除',
+                message: `是否删除「${plan.destination} · ${plan.days}日游」？`,
+                confirmButtonText: '删除',
+                confirmButtonColor: '#ee0a24',
+            })
+            const res = await planDelete(plan.id)
+            if (res.success) {
+                savedPlans.value = savedPlans.value.filter(p => p.id !== plan.id)
+                showToast('已删除')
+            }
+        } catch {
+            
+        }
+    }, 600)
+}
+
+const onTouchEnd = () => {
+    clearTimeout(longPressTimer)
+}
 
 const onChange = (event) => {
   active.value = event.detail
 }
 
-// 页面加载时检查本地 token
-onMounted(() => {
+//检查本地token
+onMounted(async () => {
     const token = localStorage.getItem('token')
-    if (token) {
+    if (!token) return
+
+    try {
+        const res = await userGet('info')
+        if (res.success) {
+            isLogin.value = true
+            nickname.value = res.data.nickname || res.data.email
+            localStorage.setItem('nickname', nickname.value)
+
+            try {
+                const plansRes = await planGet('list')
+                if (plansRes.success) {
+                    savedPlans.value = plansRes.data
+                }
+            } catch {}
+        } else {
+            localStorage.removeItem('token')
+            localStorage.removeItem('nickname')
+        }
+    } catch (err) {
         isLogin.value = true
         nickname.value = localStorage.getItem('nickname') || ''
     }
@@ -41,13 +91,12 @@ const sendSms = async () => {
         await userPost('send-code', { email: email.value })
         showToast('验证码已发送')
 
-        // 60 秒冷却
         cooldown.value = 60
-        timer = setInterval(() => {
+        smsTimer = setInterval(() => {
             cooldown.value--
             if (cooldown.value <= 0) {
-                clearInterval(timer)
-                timer = null
+                clearInterval(smsTimer)
+                smsTimer = null
             }
         }, 1000)
     } catch (err) {
@@ -99,7 +148,7 @@ const logout = () => {
 <template>
     <div class="page-container">
         <div class="page-header">
-            <van-nav-bar title="个人" />
+            <van-nav-bar left-arrow="true" left-text="返回" @click-left="goBack" title="个人" />
         </div>
         <div class="page-content" style="padding: 10px;">
             <div v-if="!isLogin" class="login-container">
@@ -130,7 +179,21 @@ const logout = () => {
             </div>
             <div v-if="isLogin" class="saved-plans" style="margin-top: 10px;">
                 <van-cell-group>
-                    <van-cell title="保存的规划方案" is-link @click="showToast('/saved-plans')" value="点击查看" arrow-direction="right" />
+                    <van-cell title="已保存的规划方案" />
+                    <van-cell 
+                        v-for="plan in savedPlans" 
+                        :key="plan.id" 
+                        :title="`${plan.destination} · ${plan.days}日游`" 
+                        :label="`预算：${plan.budget}  |  ${new Date(plan.createdAt).toLocaleDateString()}`"
+                        is-link 
+                        arrow-direction="right"
+                        @click="router.push({ name: 'detail', query: { planId: plan.id } })"
+                        @touchstart="onTouchStart(plan)"
+                        @touchend="onTouchEnd"
+                        @touchmove="onTouchEnd"
+                        @touchcancel="onTouchEnd"
+                    />
+                    <van-cell v-if="savedPlans.length === 0" title="暂无保存的方案" />
                 </van-cell-group>
                 <van-button 
                     style="width: 90%; margin: 20px auto; display: block;" 

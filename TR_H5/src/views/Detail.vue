@@ -3,6 +3,8 @@ import { useRouter } from 'vue-router'
 import { onMounted } from 'vue'
 import { reactive, ref } from 'vue'
 import { post } from '../utils/request'
+import { planPost, planGet } from '../utils/request'
+import { showToast } from 'vant'
 
 const router = useRouter()
 
@@ -15,6 +17,32 @@ const activeTimeSlots = reactive({})
 const tripData = ref(null)
 
 const error = ref('')
+
+const savePlan = async () => {
+    if (!tripData.value) {
+        showToast('暂无数据可保存')
+        return
+    }
+    if (!localStorage.getItem('token')) {
+        showToast('请先登录后再保存')
+        return
+    }
+    try {
+        const res = await planPost('save', {
+            destination: tripData.value.destination || formData.destination,
+            budget: tripData.value.budget || formData.budget,
+            days: Number(tripData.value.days) || Number(formData.days),
+            planData: tripData.value
+        })
+        if (res.success) {
+            showToast('保存成功')
+        } else {
+            showToast(res.error || '保存失败')
+        }
+    } catch (err) {
+        showToast('保存失败，请稍后重试')
+    }
+}
 
 const fetchTravelData = async () => {
     isLoading.value = true
@@ -39,7 +67,34 @@ const fetchTravelData = async () => {
     }
 }
 
-onMounted(() => {
+onMounted(async () => {
+    const planId = router.currentRoute.value.query.planId
+
+    //从已保存方案进入
+    if (planId) {
+        isLoading.value = true
+        try {
+            const res = await planGet(String(planId))
+            if (res.success) {
+                tripData.value = res.data.planData
+                Object.keys(res.data.planData.plan || {}).forEach(key => {
+                    activeTimeSlots[key] = []
+                })
+                formData.destination = res.data.destination
+                formData.budget = res.data.budget
+                formData.days = res.data.days
+            } else {
+                error.value = res.error || '方案加载失败'
+            }
+        } catch (err) {
+            error.value = '网络请求失败，请检查后端服务'
+        } finally {
+            isLoading.value = false
+        }
+        return
+    }
+
+    //从首页进入
     formData.destination = router.currentRoute.value.query.destination
     formData.budget = router.currentRoute.value.query.budget
     formData.days = router.currentRoute.value.query.days
@@ -73,21 +128,17 @@ const getDayColor = (key) => {
             <van-nav-bar :title="`${formData.destination}行程规划`" :left-arrow="true" left-text="返回" @click-left="router.back()" />
         </div>
         <div class="page-content" style="padding-bottom: 60px;">
-            <!-- 加载中 -->
             <div v-if="isLoading" class="loading-container">
                 <van-loading size="32px" vertical style="margin-top: 80px;">正在规划行程中...</van-loading>
             </div>
 
-            <!-- 错误 -->
             <div v-else-if="error">
                 <van-empty image="error" :description="error">
                     <van-button @click="fetchTravelData">点击重试</van-button>
                 </van-empty>
             </div>
 
-            <!-- 行程数据 -->
             <template v-else-if="tripData">
-                <!-- 概览卡片 -->
                 <van-cell-group inset style="margin-top: 10px;">
                     <van-cell :title="`${tripData.destination} · ${tripData.days}日游`" :value="tripData.budget" />
                 </van-cell-group>
@@ -123,40 +174,30 @@ const getDayColor = (key) => {
                     </van-collapse-item>
                 </van-collapse>
 
-                <!-- 预算明细 -->
                 <van-cell-group inset style="margin-top: 10px;" v-if="tripData.pre_trip_budget_table">
                     <van-cell title="预算明细" title-class="section-title" />
                     <van-cell v-for="(val, key) in tripData.pre_trip_budget_table" :key="key" :title="key" :value="val" />
                 </van-cell-group>
 
-                <!-- 注意事项 -->
                 <van-cell-group inset style="margin-top: 10px;" v-if="tripData.notice">
                     <van-cell title="注意事项" title-class="section-title" />
                     <div class="notice-text">{{ tripData.notice }}</div>
                 </van-cell-group>
 
-                <!-- 避坑指南（avoid 字段） -->
                 <van-cell-group inset style="margin-top: 10px;" v-if="tripData.avoid">
                     <van-cell title="避坑指南" title-class="section-title" />
                     <div class="notice-text">{{ tripData.avoid }}</div>
                 </van-cell-group>
 
-                <!-- 避坑指南（avoid_pitfalls.red_list 字段） -->
                 <van-cell-group inset style="margin-top: 10px;" v-if="tripData.avoid_pitfalls?.red_list">
                     <van-cell title="避坑指南" title-class="section-title" />
                     <van-cell v-for="(item, idx) in tripData.avoid_pitfalls.red_list" :key="idx" :title="`${idx + 1}. ${item}`" />
                 </van-cell-group>
 
-                <!-- 重新生成 -->
-                <div style="text-align: center; margin: 16px 0;">
+                <div style="display: flex; justify-content: center; gap: 20px; margin: 16px 0;">
                     <van-button type="primary" round :loading="isLoading" @click="fetchTravelData">重新生成</van-button>
+                    <van-button type="default" round @click="savePlan">保存方案</van-button>
                 </div>
-
-                <!-- 备选方案 -->
-                <van-cell-group inset style="margin-top: 10px; margin-bottom: 20px;" v-if="tripData.alternative_plans">
-                    <van-cell title="备选方案" title-class="section-title" />
-                    <van-cell v-for="(val, key) in tripData.alternative_plans" :key="key" :title="key.replace('_', ' ').toUpperCase()" :value="val" />
-                </van-cell-group>
             </template>
         </div>
     </div>

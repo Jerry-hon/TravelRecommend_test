@@ -7,10 +7,8 @@ const dbPath = path.join(__dirname, 'travel.db');
 
 const db = new Database(dbPath);
 
-// 启用 WAL 模式提升并发性能
 db.pragma('journal_mode = WAL');
 
-// 建表（如果不存在则创建）
 db.exec(`
   CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -27,6 +25,17 @@ db.exec(`
     code TEXT NOT NULL,
     expires_at DATETIME NOT NULL,
     used INTEGER DEFAULT 0
+  );
+
+  CREATE TABLE IF NOT EXISTS travel_plans (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    destination TEXT NOT NULL,
+    budget TEXT NOT NULL,
+    days INTEGER NOT NULL,
+    plan_data TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
   );
 `);
 
