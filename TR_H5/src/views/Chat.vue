@@ -147,6 +147,14 @@ const fetchAIResponse = (query, history = []) => {
                 </template>
             </van-field>
         </div>
+        <div class="page-tabbar">
+            <van-tabbar v-model="active" @change="onChange">
+                <van-tabbar-item icon="home-o" to="/home">首页</van-tabbar-item>
+                <van-tabbar-item icon="chat" to="/chat">聊天</van-tabbar-item>
+                <van-tabbar-item icon="friends-o" to="/community">社区</van-tabbar-item>
+                <van-tabbar-item icon="user-o" to="/profile">个人</van-tabbar-item>
+            </van-tabbar>
+        </div>
     </div>
 </template>
 
@@ -154,7 +162,7 @@ const fetchAIResponse = (query, history = []) => {
 .chat-page {
     display: flex;
     flex-direction: column;
-    height: 100vh;
+    height: calc(100vh - 50px);
     overflow: hidden;
 }
 

@@ -5,7 +5,7 @@ import { showToast, showConfirmDialog } from 'vant'
 import { userPost, userGet } from '../utils/request'
 import { planGet, planDelete } from '../utils/request'
 
-const active = ref(2)
+const active = ref(3)
 const router = useRouter()
 const email = ref('')
 const sms = ref('')
@@ -206,7 +206,8 @@ const logout = () => {
             <van-tabbar v-model="active" @change="onChange">
                 <van-tabbar-item icon="home-o" to="/home">首页</van-tabbar-item>
                 <van-tabbar-item icon="chat" to="/chat">聊天</van-tabbar-item>
-                <van-tabbar-item icon="user" to="/profile">个人</van-tabbar-item>
+                <van-tabbar-item icon="friends-o" to="/community">社区</van-tabbar-item>
+                <van-tabbar-item icon="user-o" to="/profile">个人</van-tabbar-item>     
             </van-tabbar>
         </div>
     </div>

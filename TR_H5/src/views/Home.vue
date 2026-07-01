@@ -149,7 +149,8 @@ const onChange = (event) => {
             <van-tabbar v-model="active" @change="onChange">
                 <van-tabbar-item icon="home-o" to="/home">首页</van-tabbar-item>
                 <van-tabbar-item icon="chat" to="/chat">聊天</van-tabbar-item>
-                <van-tabbar-item icon="user" to="/profile">个人</van-tabbar-item>     
+                <van-tabbar-item icon="friends-o" to="/community">社区</van-tabbar-item>
+                <van-tabbar-item icon="user-o" to="/profile">个人</van-tabbar-item>     
             </van-tabbar>
         </div>
         <div>
