@@ -136,19 +136,19 @@ const fetchAIResponse = (query, history = []) => {
                 </div>
             </div>
         </div>
-        <div class="chat-input">
-           <van-field
-                type="text"
-                v-model="inputMessage"
-                placeholder="请输入问题"
-           >
-                <template #button>
-                    <van-button @click="sendMessage" :disabled="!inputMessage.trim()" type="primary" size="small">发送</van-button>
-                </template>
-            </van-field>
-        </div>
-        <div class="page-tabbar">
-            <van-tabbar v-model="active" @change="onChange">
+        <div class="chat-bottom">
+            <div class="chat-input">
+               <van-field
+                    type="text"
+                    v-model="inputMessage"
+                    placeholder="请输入问题"
+               >
+                    <template #button>
+                        <van-button @click="sendMessage" :disabled="!inputMessage.trim()" type="primary" size="small">发送</van-button>
+                    </template>
+                </van-field>
+            </div>
+            <van-tabbar v-model="active" @change="onChange" style="position: static;">
                 <van-tabbar-item icon="home-o" to="/home">首页</van-tabbar-item>
                 <van-tabbar-item icon="chat" to="/chat">聊天</van-tabbar-item>
                 <van-tabbar-item icon="friends-o" to="/community">社区</van-tabbar-item>
@@ -162,7 +162,7 @@ const fetchAIResponse = (query, history = []) => {
 .chat-page {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 50px);
+    height: 100vh;
     overflow: hidden;
 }
 
@@ -171,7 +171,7 @@ const fetchAIResponse = (query, history = []) => {
     overflow-y: auto;
 }
 
-.chat-input {
+.chat-bottom {
     flex-shrink: 0;
 }
 
