@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast } from 'vant'
 
@@ -9,6 +9,16 @@ const formData = reactive({
     destination: '',
     budget: null,
     days: null
+})
+
+const isLogin = ref(false)
+
+onMounted(async () => {
+    isLogin.value = localStorage.getItem('token') !== null
+    if(!isLogin.value) {
+        await nextTick()
+        showToast('请登录后使用完整功能')
+    }
 })
 
 const showDestination = ref(false)

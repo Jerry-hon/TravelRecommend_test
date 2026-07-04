@@ -130,4 +130,34 @@ export function planDelete(id) {
     return planRequest.delete(`/${id}`)
 }
 
+// 社区相关（发帖/回帖）
+const postsRequest = axios.create({
+    baseURL: '/api/posts',
+    timeout: 10000,
+    headers: {
+        'Content-Type': 'application/json'
+    }
+})
+
+postsRequest.interceptors.request.use(config => {
+    const token = localStorage.getItem('token')
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`
+    }
+    return config
+})
+
+postsRequest.interceptors.response.use(
+    response => response.data,
+    error => Promise.reject(error)
+)
+
+export function postsGet(url, params) {
+    return postsRequest.get(url, { params })
+}
+
+export function postsPost(url, data) {
+    return postsRequest.post(url, data)
+}
+
 export default request

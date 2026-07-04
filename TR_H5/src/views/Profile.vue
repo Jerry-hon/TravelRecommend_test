@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { showToast, showConfirmDialog } from 'vant'
 import { userPost, userGet } from '../utils/request'
 import { planGet, planDelete } from '../utils/request'
+import { postsGet } from '../utils/request'
 
 const active = ref(3)
 const router = useRouter()
@@ -13,6 +14,7 @@ const nickname = ref('')
 const isLogin = ref(false)
 const cooldown = ref(0)
 const savedPlans = ref([])
+const myPosts = ref([])
 let smsTimer = null
 let longPressTimer = null
 
@@ -64,6 +66,13 @@ onMounted(async () => {
                 const plansRes = await planGet('list')
                 if (plansRes.success) {
                     savedPlans.value = plansRes.data
+                }
+            } catch {}
+
+            try {
+                const postsRes = await postsGet('my')
+                if (postsRes.success) {
+                    myPosts.value = postsRes.data
                 }
             } catch {}
         } else {
@@ -150,9 +159,9 @@ const logout = () => {
         <div class="page-header">
             <van-nav-bar left-arrow="true" left-text="返回" @click-left="goBack" title="个人" />
         </div>
-        <div class="page-content" style="padding: 10px;">
+        <div class="page-content" style="margin-top: 10px;">
             <div v-if="!isLogin" class="login-container">
-                <van-cell-group style="padding: 10px;">
+                <van-cell-group style="margin-top: 10px;">
                     <van-cell @click="showToast('/login')" title="请使用邮箱登录或注册"/>
                     <van-field v-model="email" label="邮箱" placeholder="请输入邮箱" />
                         <van-field
@@ -168,8 +177,8 @@ const logout = () => {
                             </van-button>
                             </template>
                     </van-field>
-                    <van-button style="width: 90%; margin: 0 auto; display: block;" type="primary" @click="login">登录/注册</van-button>
                 </van-cell-group>
+                <van-button style="width: 90%; margin: 10px auto; display: block;" type="primary" @click="login">登录/注册</van-button>
             </div>
             <div v-if="isLogin" class="user-info" style="margin-top: 10px;">
                 <van-cell-group>
@@ -195,6 +204,18 @@ const logout = () => {
                     />
                     <van-cell v-if="savedPlans.length === 0" title="暂无保存的方案" />
                 </van-cell-group>
+                
+                <van-cell-group style="margin-top: 10px;">
+                    <van-cell title="我的发帖记录" />
+                    <van-cell 
+                        v-for="post in myPosts" 
+                        :key="post.id" 
+                        :title="post.title" 
+                        :label="post.content.length > 40 ? post.content.slice(0, 40) + '...' : post.content"
+                    />
+                    <van-cell v-if="myPosts.length === 0" title="暂无发帖记录" />
+                </van-cell-group>
+
                 <van-button 
                     style="width: 90%; margin: 20px auto; display: block;" 
                     type="danger" 
