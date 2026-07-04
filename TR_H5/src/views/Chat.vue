@@ -102,6 +102,7 @@ const fetchAIResponse = (query, history = []) => {
         <div class="page-header">
             <van-nav-bar title="聊天" :left-arrow="true" left-text="返回" @click-left="goBack" right-text="重置聊天" @click-right="resetChat" />
         </div>
+
         <div class="chat-body">
             <div v-if="messages.length === 0"  class="chat-container">
                 <van-empty description="和AI聊天吧" style="margin-top: 120px;" />
@@ -136,6 +137,7 @@ const fetchAIResponse = (query, history = []) => {
                 </div>
             </div>
         </div>
+        
         <div class="chat-bottom">
             <div class="chat-input">
                <van-field
