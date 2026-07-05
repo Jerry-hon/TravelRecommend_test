@@ -2,15 +2,15 @@ import db from '../db/database.js';
 import userService from './userService.js';
 
 class PlanService {
-  getUserId(token) {
-    const user = userService.getUserByToken(token);
+  getUserId(email) {
+    const user = userService.getUserByEmail(email);
     return user ? user.id : null;
   }
 
-  save(token, destination, budget, days, planData) {
-    const userId = this.getUserId(token);
+  save(email, destination, budget, days, planData) {
+    const userId = this.getUserId(email);
     if (!userId) {
-      return { success: false, error: '未登录或 token 已过期' };
+      return { success: false, error: '未登录或用户不存在' };
     }
 
     const result = db.prepare(
@@ -23,10 +23,10 @@ class PlanService {
     };
   }
 
-  list(token) {
-    const userId = this.getUserId(token);
+  list(email) {
+    const userId = this.getUserId(email);
     if (!userId) {
-      return { success: false, error: '未登录或 token 已过期' };
+      return { success: false, error: '未登录或用户不存在' };
     }
 
     const rows = db.prepare(
@@ -47,10 +47,10 @@ class PlanService {
     };
   }
 
-  getById(token, planId) {
-    const userId = this.getUserId(token);
+  getById(email, planId) {
+    const userId = this.getUserId(email);
     if (!userId) {
-      return { success: false, error: '未登录或 token 已过期' };
+      return { success: false, error: '未登录或用户不存在' };
     }
 
     const row = db.prepare(
@@ -74,10 +74,10 @@ class PlanService {
     };
   }
 
-  delete(token, planId) {
-    const userId = this.getUserId(token);
+  delete(email, planId) {
+    const userId = this.getUserId(email);
     if (!userId) {
-      return { success: false, error: '未登录或 token 已过期' };
+      return { success: false, error: '未登录或用户不存在' };
     }
 
     const plan = db.prepare('SELECT id FROM travel_plans WHERE id = ? AND user_id = ?').get(planId, userId);

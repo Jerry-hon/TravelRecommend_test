@@ -50,10 +50,10 @@ const onChange = (event) => {
   active.value = event.detail
 }
 
-//检查本地token
+//检查是否已登录
 onMounted(async () => {
-    const token = localStorage.getItem('token')
-    if (!token) return
+    const savedEmail = localStorage.getItem('email')
+    if (!savedEmail) return
 
     try {
         const res = await userGet('info')
@@ -76,12 +76,12 @@ onMounted(async () => {
                 }
             } catch {}
         } else {
-            localStorage.removeItem('token')
+            localStorage.removeItem('email')
             localStorage.removeItem('nickname')
         }
     } catch (err) {
-        isLogin.value = true
-        nickname.value = localStorage.getItem('nickname') || ''
+        localStorage.removeItem('email')
+        localStorage.removeItem('nickname')
     }
 })
 
@@ -129,7 +129,7 @@ const login = async () => {
     try {
         const res = await userPost('login', { email: email.value, code: sms.value })
         if (res.success) {
-            localStorage.setItem('token', res.data.token)
+            localStorage.setItem('email', email.value)
             localStorage.setItem('nickname', res.data.nickname || email.value)
             isLogin.value = true
             nickname.value = res.data.nickname || email.value
@@ -143,7 +143,7 @@ const login = async () => {
 }
 
 const logout = () => {
-    localStorage.removeItem('token')
+    localStorage.removeItem('email')
     localStorage.removeItem('nickname')
     isLogin.value = false
     email.value = ''

@@ -2,15 +2,15 @@ import db from '../db/database.js'
 import userService from './userService.js';
 
 class PostService {
-    getUserId(token) {
-        const user = userService.getUserByToken(token);
+    getUserId(email) {
+        const user = userService.getUserByEmail(email);
         return user ? user.id : null;
     }
 
-    showMyPosts(token){
-        const userId = this.getUserId(token);
+    showMyPosts(email){
+        const userId = this.getUserId(email);
         if (!userId) {
-            return { success: false, error: '未登录或 token 已过期' };
+            return { success: false, error: '未登录或用户不存在' };
         }
         const rows = db.prepare(
             `SELECT id, title, content, created_at FROM posts WHERE user_id = ? ORDER BY created_at DESC`
@@ -46,10 +46,10 @@ class PostService {
         };
     }
 
-    createPost(token, title, content){
-        const userId = this.getUserId(token);
+    createPost(email, title, content){
+        const userId = this.getUserId(email);
         if (!userId) {
-            return { success: false, error: '未登录或 token 已过期' };
+            return { success: false, error: '未登录或用户不存在' };
         }
         const result = db.prepare(
             'INSERT INTO posts (user_id, title, content) VALUES (?, ?, ?)'
@@ -60,10 +60,10 @@ class PostService {
         };
     }
 
-    deletePost(token, postId){
-        const userId = this.getUserId(token);
+    deletePost(email, postId){
+        const userId = this.getUserId(email);
         if (!userId) {
-            return { success: false, error: '未登录或 token 已过期' };
+            return { success: false, error: '未登录或用户不存在' };
         }
         db.prepare('DELETE FROM posts WHERE id = ? AND user_id = ?').run(postId, userId);
         return {
@@ -72,10 +72,10 @@ class PostService {
         };
     }
 
-    postReply(token, postId, content){
-        const userId = this.getUserId(token);
+    postReply(email, postId, content){
+        const userId = this.getUserId(email);
         if (!userId) {
-            return { success: false, error: '未登录或 token 已过期' };
+            return { success: false, error: '未登录或用户不存在' };
         }
         const result = db.prepare(
             'INSERT INTO replies (user_id, post_id, content) VALUES (?, ?, ?)'
@@ -86,10 +86,10 @@ class PostService {
         };
     }
 
-    deleteReply(token, replyId){
-        const userId = this.getUserId(token);
+    deleteReply(email, replyId){
+        const userId = this.getUserId(email);
         if (!userId) {
-            return { success: false, error: '未登录或 token 已过期' };
+            return { success: false, error: '未登录或用户不存在' };
         }
         db.prepare('DELETE FROM replies WHERE id = ? AND user_id = ?').run(replyId, userId);
         return {

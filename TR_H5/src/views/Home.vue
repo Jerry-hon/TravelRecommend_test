@@ -14,7 +14,7 @@ const formData = reactive({
 const isLogin = ref(false)
 
 onMounted(async () => {
-    isLogin.value = localStorage.getItem('token') !== null
+    isLogin.value = localStorage.getItem('email') !== null
     if(!isLogin.value) {
         await nextTick()
         showToast('请登录后使用完整功能')

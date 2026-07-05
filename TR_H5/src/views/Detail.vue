@@ -23,7 +23,7 @@ const savePlan = async () => {
         showToast('暂无数据可保存')
         return
     }
-    if (!localStorage.getItem('token')) {
+    if (!localStorage.getItem('email')) {
         showToast('请先登录后再保存')
         return
     }

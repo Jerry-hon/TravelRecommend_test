@@ -76,9 +76,9 @@ const userRequest = axios.create({
 })
 
 userRequest.interceptors.request.use(config => {
-    const token = localStorage.getItem('token')
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`
+    const email = localStorage.getItem('email')
+    if (email) {
+        config.headers.Authorization = `Bearer ${email}`
     }
     return config
 })
@@ -106,9 +106,9 @@ const planRequest = axios.create({
 })
 
 planRequest.interceptors.request.use(config => {
-    const token = localStorage.getItem('token')
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`
+    const email = localStorage.getItem('email')
+    if (email) {
+        config.headers.Authorization = `Bearer ${email}`
     }
     return config
 })
@@ -140,9 +140,9 @@ const postsRequest = axios.create({
 })
 
 postsRequest.interceptors.request.use(config => {
-    const token = localStorage.getItem('token')
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`
+    const email = localStorage.getItem('email')
+    if (email) {
+        config.headers.Authorization = `Bearer ${email}`
     }
     return config
 })

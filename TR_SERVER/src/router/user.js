@@ -26,12 +26,12 @@ router.post('/login', (req, res) => {
   res.json(result);
 });
 
-// 获取用户信息（通过 token）
+// 获取用户信息（通过邮箱）
 router.get('/info', (req, res) => {
-  const token = req.headers.authorization?.replace('Bearer ', '');
-  const user = userService.getUserByToken(token);
+  const email = req.headers.authorization?.replace('Bearer ', '');
+  const user = userService.getUserByEmail(email);
   if (!user) {
-    return res.status(401).json({ success: false, error: '未登录或 token 已过期' });
+    return res.status(401).json({ success: false, error: '用户不存在，请重新登录' });
   }
   res.json({ success: true, data: user });
 });
