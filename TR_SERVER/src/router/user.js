@@ -1,5 +1,6 @@
 import express from 'express';
 import userService from '../service/userService.js';
+import { verifyToken } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
@@ -26,10 +27,9 @@ router.post('/login', (req, res) => {
   res.json(result);
 });
 
-// 获取用户信息（通过邮箱）
-router.get('/info', (req, res) => {
-  const email = req.headers.authorization?.replace('Bearer ', '');
-  const user = userService.getUserByEmail(email);
+// 获取用户信息（通过JWT）
+router.get('/info', verifyToken, (req, res) => {
+  const user = userService.getUserByEmail(req.user.email);
   if (!user) {
     return res.status(401).json({ success: false, error: '用户不存在，请重新登录' });
   }

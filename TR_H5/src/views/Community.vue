@@ -31,7 +31,7 @@ const replyContent = ref('')
 const isReplying = ref(false)
 
 onMounted(async () => {
-    isLogin.value = !!localStorage.getItem('email')
+    isLogin.value = !!localStorage.getItem('token')
     if (isLogin.value) {
         try {
             const res = await userGet('info')

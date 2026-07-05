@@ -52,8 +52,8 @@ const onChange = (event) => {
 
 //检查是否已登录
 onMounted(async () => {
-    const savedEmail = localStorage.getItem('email')
-    if (!savedEmail) return
+    const savedToken = localStorage.getItem('token')
+    if (!savedToken) return
 
     try {
         const res = await userGet('info')
@@ -76,11 +76,11 @@ onMounted(async () => {
                 }
             } catch {}
         } else {
-            localStorage.removeItem('email')
+            localStorage.removeItem('token')
             localStorage.removeItem('nickname')
         }
     } catch (err) {
-        localStorage.removeItem('email')
+        localStorage.removeItem('token')
         localStorage.removeItem('nickname')
     }
 })
@@ -129,7 +129,7 @@ const login = async () => {
     try {
         const res = await userPost('login', { email: email.value, code: sms.value })
         if (res.success) {
-            localStorage.setItem('email', email.value)
+            localStorage.setItem('token', res.data.token)
             localStorage.setItem('nickname', res.data.nickname || email.value)
             isLogin.value = true
             nickname.value = res.data.nickname || email.value
@@ -143,7 +143,7 @@ const login = async () => {
 }
 
 const logout = () => {
-    localStorage.removeItem('email')
+    localStorage.removeItem('token')
     localStorage.removeItem('nickname')
     isLogin.value = false
     email.value = ''

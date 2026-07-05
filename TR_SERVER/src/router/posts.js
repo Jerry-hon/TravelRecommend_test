@@ -4,10 +4,8 @@ import { verifyToken } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-const getEmail = (req) => req.headers.authorization?.replace('Bearer ', '');
-
 router.get('/my', verifyToken, async (req, res) => {
-    const email = getEmail(req);
+    const email = req.user.email;
     const result = await postService.showMyPosts(email);
     if (!result.success) {
         return res.status(401).json(result);
@@ -32,7 +30,7 @@ router.get('/list', async (req, res) => {
 });
 
 router.post('/create', verifyToken, async (req, res) => {
-    const email = getEmail(req);
+    const email = req.user.email;
     const { title, content } = req.body;
     if (!title || !content) {
         return res.status(400).json({ success: false, error: '标题和内容不能为空' });
@@ -42,14 +40,14 @@ router.post('/create', verifyToken, async (req, res) => {
 });
 
 router.post('/delete/:id', verifyToken, async (req, res) => {
-    const email = getEmail(req);
+    const email = req.user.email;
     const postId = req.params.id;
     const result = await postService.deletePost(email, postId);
     res.json(result);
 });
 
 router.post('/reply/:id', verifyToken, async (req, res) => {
-    const email = getEmail(req);
+    const email = req.user.email;
     const postId = req.params.id;
     const { content } = req.body;
     if (!content) {
@@ -60,7 +58,7 @@ router.post('/reply/:id', verifyToken, async (req, res) => {
 });
 
 router.post('/delete-reply/:id', verifyToken, async (req, res) => {
-    const email = getEmail(req);
+    const email = req.user.email;
     const replyId = req.params.id;
     const result = await postService.deleteReply(email, replyId);
     res.json(result);

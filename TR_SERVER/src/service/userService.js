@@ -1,5 +1,6 @@
 import db from '../db/database.js';
 import nodemailer from 'nodemailer';
+import jwt from 'jsonwebtoken';
 import 'dotenv/config';
 
 // 初始化邮件发送器
@@ -83,12 +84,22 @@ class UserService {
       };
     }
 
+    const token = jwt.sign(
+      { id: user.id, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    db.prepare('UPDATE users SET token = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
+      .run(token, user.id);
+
     return {
       success: true,
       data: {
         id: user.id,
         email: user.email,
         nickname: user.nickname,
+        token,
       },
     };
   }
