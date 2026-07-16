@@ -50,10 +50,10 @@ const onChange = (event) => {
   active.value = event.detail
 }
 
-//检查本地token
+//检查是否已登录
 onMounted(async () => {
-    const token = localStorage.getItem('token')
-    if (!token) return
+    const savedToken = localStorage.getItem('token')
+    if (!savedToken) return
 
     try {
         const res = await userGet('info')
@@ -80,8 +80,8 @@ onMounted(async () => {
             localStorage.removeItem('nickname')
         }
     } catch (err) {
-        isLogin.value = true
-        nickname.value = localStorage.getItem('nickname') || ''
+        localStorage.removeItem('token')
+        localStorage.removeItem('nickname')
     }
 })
 

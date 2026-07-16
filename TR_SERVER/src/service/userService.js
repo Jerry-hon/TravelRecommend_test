@@ -1,13 +1,13 @@
 import db from '../db/database.js';
-import crypto from 'crypto';
 import nodemailer from 'nodemailer';
+import jwt from 'jsonwebtoken';
 import 'dotenv/config';
 
 // 初始化邮件发送器
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
   port: Number(process.env.SMTP_PORT),
-  secure: true, // 465 端口使用 SSL
+  secure: true,
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
@@ -20,14 +20,8 @@ class UserService {
     return String(Math.floor(100000 + Math.random() * 900000));
   }
 
-  // 生成随机 token
-  generateToken() {
-    return crypto.randomBytes(32).toString('hex');
-  }
-
   // 发送验证码：生成代码存入数据库，5 分钟有效，同一邮箱旧码自动失效
   async sendCode(email) {
-    // 同一邮箱的旧验证码标记为已使用
     db.prepare('UPDATE verify_codes SET used = 1 WHERE email = ?').run(email);
 
     const code = this.generateCode();
@@ -60,12 +54,10 @@ class UserService {
 
   // 登录/注册：验证码正确则查找用户，不存在则自动注册
   login(email, code) {
-    // 验证邮箱格式
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return { success: false, error: '邮箱格式不正确' };
     }
 
-    // 查找有效验证码
     const record = db.prepare(
       `SELECT * FROM verify_codes 
        WHERE email = ? AND code = ? AND used = 0 AND expires_at > datetime('now')
@@ -76,32 +68,30 @@ class UserService {
       return { success: false, error: '验证码错误或已过期' };
     }
 
-    // 标记验证码已使用
     db.prepare('UPDATE verify_codes SET used = 1 WHERE id = ?').run(record.id);
 
-    // 查找用户，不存在则创建
     let user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
-    const token = this.generateToken();
 
-    if (user) {
-      // 老用户：更新 token
-      db.prepare(
-        "UPDATE users SET token = ?, updated_at = datetime('now') WHERE id = ?"
-      ).run(token, user.id);
-      user.token = token;
-    } else {
-      // 新用户：自动注册
+    if (!user) {
       const result = db.prepare(
-        'INSERT INTO users (email, token) VALUES (?, ?)'
-      ).run(email, token);
+        'INSERT INTO users (email) VALUES (?)'
+      ).run(email);
       user = {
         id: result.lastInsertRowid,
         email,
         nickname: '',
-        token,
         created_at: new Date().toISOString(),
       };
     }
+
+    const token = jwt.sign(
+      { id: user.id, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    db.prepare('UPDATE users SET token = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
+      .run(token, user.id);
 
     return {
       success: true,
@@ -109,17 +99,17 @@ class UserService {
         id: user.id,
         email: user.email,
         nickname: user.nickname,
-        token: user.token,
+        token,
       },
     };
   }
 
-  // 根据 token 获取用户信息
-  getUserByToken(token) {
-    if (!token) return null;
+  // 根据邮箱获取用户信息
+  getUserByEmail(email) {
+    if (!email) return null;
     return db.prepare(
-      'SELECT id, email, nickname, created_at FROM users WHERE token = ?'
-    ).get(token);
+      'SELECT id, email, nickname, created_at FROM users WHERE email = ?'
+    ).get(email);
   }
 }
 

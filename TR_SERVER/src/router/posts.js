@@ -1,15 +1,12 @@
 import express from 'express';
 import postService from '../service/postsService.js';
-import userService from '../service/userService.js';
 import { verifyToken } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-const getToken = (req) => req.headers.authorization?.replace('Bearer ', '');
-
 router.get('/my', verifyToken, async (req, res) => {
-    const token = getToken(req);
-    const result = await postService.showMyPosts(token);
+    const email = req.user.email;
+    const result = await postService.showMyPosts(email);
     if (!result.success) {
         return res.status(401).json(result);
     }
@@ -26,7 +23,6 @@ router.get('/detail/:id', async (req, res) => {
 });
 
 router.get('/list', async (req, res) => {
-    const token = getToken(req);
     const page = req.query.page || 1;
     const pageSize = req.query.pageSize || 10;
     const posts = await postService.showPosts(page, pageSize);
@@ -34,37 +30,37 @@ router.get('/list', async (req, res) => {
 });
 
 router.post('/create', verifyToken, async (req, res) => {
-    const token = getToken(req);
+    const email = req.user.email;
     const { title, content } = req.body;
     if (!title || !content) {
         return res.status(400).json({ success: false, error: '标题和内容不能为空' });
     }
-    const result = await postService.createPost(token, title, content);
+    const result = await postService.createPost(email, title, content);
     res.json(result);
 });
 
 router.post('/delete/:id', verifyToken, async (req, res) => {
-    const token = getToken(req);
+    const email = req.user.email;
     const postId = req.params.id;
-    const result = await postService.deletePost(token, postId);
+    const result = await postService.deletePost(email, postId);
     res.json(result);
 });
 
 router.post('/reply/:id', verifyToken, async (req, res) => {
-    const token = getToken(req);
+    const email = req.user.email;
     const postId = req.params.id;
     const { content } = req.body;
     if (!content) {
         return res.status(400).json({ success: false, error: '评论内容不能为空' });
     }
-    const result = await postService.postReply(token, postId, content);
+    const result = await postService.postReply(email, postId, content);
     res.json(result);
 });
 
 router.post('/delete-reply/:id', verifyToken, async (req, res) => {
-    const token = getToken(req);
+    const email = req.user.email;
     const replyId = req.params.id;
-    const result = await postService.deleteReply(token, replyId);
+    const result = await postService.deleteReply(email, replyId);
     res.json(result);
 });
 

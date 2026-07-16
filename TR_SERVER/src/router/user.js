@@ -1,5 +1,6 @@
 import express from 'express';
 import userService from '../service/userService.js';
+import { verifyToken } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
@@ -26,12 +27,11 @@ router.post('/login', (req, res) => {
   res.json(result);
 });
 
-// 获取用户信息（通过 token）
-router.get('/info', (req, res) => {
-  const token = req.headers.authorization?.replace('Bearer ', '');
-  const user = userService.getUserByToken(token);
+// 获取用户信息（通过JWT）
+router.get('/info', verifyToken, (req, res) => {
+  const user = userService.getUserByEmail(req.user.email);
   if (!user) {
-    return res.status(401).json({ success: false, error: '未登录或 token 已过期' });
+    return res.status(401).json({ success: false, error: '用户不存在，请重新登录' });
   }
   res.json({ success: true, data: user });
 });
