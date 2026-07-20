@@ -1,0 +1,14 @@
+services:
+  frontend:
+    build: .
+    container_name: travel_frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    networks:
+      - travel_network
+
+networks:
+  travel_network:
+    name: travel_network
+    external: true

@@ -1,0 +1,23 @@
+services:
+  backend:
+    build: .
+    container_name: travel_backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      # 持久化 SQLite 数据库文件
+      - backend_data:/app/src/db
+    ports:
+      - "3300:3300"
+    networks:
+      - travel_network
+
+volumes:
+  backend_data:
+    driver: local
+
+networks:
+  travel_network:
+    name: travel_network
+    external: true
