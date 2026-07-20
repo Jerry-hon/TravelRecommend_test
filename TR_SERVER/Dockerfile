@@ -2,8 +2,9 @@ FROM node:20-slim
 
 WORKDIR /app
 
-# better-sqlite3 编译依赖
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# 换腾讯云 Debian 镜像源 + 安装 better-sqlite3 编译依赖
+RUN sed -i 's|http://deb.debian.org|https://mirrors.tencentyun.com|g' /etc/apt/sources.list.d/debian.sources \
+    && apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
