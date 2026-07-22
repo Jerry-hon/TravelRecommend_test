@@ -1,5 +1,6 @@
 import {ChatOpenAI} from '@langchain/openai';
-import {convertToChunk, HumanMessage, SystemMessage, AIMessage} from '@langchain/core/messages';
+import {HumanMessage, SystemMessage, AIMessage} from '@langchain/core/messages';
+import logger from '../utils/logger.js';
 import 'dotenv/config';
 
 class TravelService {
@@ -30,7 +31,7 @@ class TravelService {
 
     try {
       const response = await this.llm.invoke(messages);
-      console.log(response);
+      logger.debug('AI 推荐生成完成', { destination, days, budget });
       return response;
     } catch (error) {
       return {success: false, error: error.message};
@@ -141,6 +142,7 @@ class TravelService {
         reply: fullResponse
       }
     } catch(error){
+      logger.error('AI 对话失败', { error: error.message });
       return {
         success: false,
         error: error.message

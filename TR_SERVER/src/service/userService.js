@@ -1,6 +1,7 @@
 import db from '../db/database.js';
 import nodemailer from 'nodemailer';
 import jwt from 'jsonwebtoken';
+import logger from '../utils/logger.js';
 import 'dotenv/config';
 
 // 初始化邮件发送器
@@ -45,7 +46,7 @@ class UserService {
         `,
       });
     } catch (err) {
-      console.error('邮件发送失败:', err.message);
+      logger.error('邮件发送失败', { email, error: err.message });
       return { success: false, error: '验证码发送失败，请稍后重试' };
     }
 

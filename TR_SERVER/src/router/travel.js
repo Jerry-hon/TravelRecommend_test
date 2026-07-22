@@ -1,6 +1,7 @@
 import express from 'express';
 import travelService from '../service/travelService.js';
 import { createStreamResponse } from '../utils/streamUtils.js';
+import logger from '../utils/logger.js';
 
 const router = express.Router();
   
@@ -14,19 +15,20 @@ router.post('/recommend', async (req, res) => {
     const response = await travelService.recommend(destination, budget, days);
     const full = response?.content || JSON.stringify(response);
 
-    // 尝试从 AI 返回中提取 JSON
     try {
       const jsonMatch = full.match(/```json\n([\s\S]*?)\n```/) ||
         full.match(/```\n([\s\S]*?)\n```/) ||
         full.match(/\{[\s\S]*\}/);
       const jsonStr = jsonMatch ? jsonMatch[1] || jsonMatch[0] : full;
       const parsed = JSON.parse(jsonStr);
+      logger.info('旅行推荐成功', { destination, days, budget });
       return res.status(200).json({ success: true, data: parsed });
     } catch (parseError) {
-      // JSON 解析失败，直接返回原始内容
+      logger.warn('AI 返回 JSON 解析失败，返回原始内容', { destination, error: parseError.message });
       return res.status(200).json({ success: true, raw: full });
     }
   } catch (error) {
+    logger.error('旅行推荐失败', { destination, error: error.message });
     return res.status(500).json({ success: false, error: error.message });
   }
 });
