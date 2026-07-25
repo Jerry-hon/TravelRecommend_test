@@ -11,26 +11,32 @@ router.post('/recommend', async (req, res) => {
     return res.status(400).json({ success: false, error: 'Destination, budget, and days are required' });
   }
 
-  try {
-    const response = await travelService.recommend(destination, budget, days);
-    const full = response?.content || JSON.stringify(response);
+  const stream = createStreamResponse(res);
 
-    try {
-      const jsonMatch = full.match(/```json\n([\s\S]*?)\n```/) ||
-        full.match(/```\n([\s\S]*?)\n```/) ||
-        full.match(/\{[\s\S]*\}/);
-      const jsonStr = jsonMatch ? jsonMatch[1] || jsonMatch[0] : full;
-      const parsed = JSON.parse(jsonStr);
-      logger.info('旅行推荐成功', { destination, days, budget });
-      return res.status(200).json({ success: true, data: parsed });
-    } catch (parseError) {
-      logger.warn('AI 返回 JSON 解析失败，返回原始内容', { destination, error: parseError.message });
-      return res.status(200).json({ success: true, raw: full });
-    }
-  } catch (error) {
-    logger.error('旅行推荐失败', { destination, error: error.message });
-    return res.status(500).json({ success: false, error: error.message });
+  const result = await travelService.recommend(destination, budget, days, (chunk) => {
+    stream.send({ type: 'chunk', content: chunk });
+  });
+
+  if (!result.success) {
+    stream.send({ type: 'error', error: result.error });
+    stream.end();
+    return;
   }
+
+  const full = result.content;
+  try {
+    const jsonMatch = full.match(/```json\n([\s\S]*?)\n```/) ||
+      full.match(/```\n([\s\S]*?)\n```/) ||
+      full.match(/\{[\s\S]*\}/);
+    const jsonStr = jsonMatch ? jsonMatch[1] || jsonMatch[0] : full;
+    const parsed = JSON.parse(jsonStr);
+    logger.info('旅行推荐成功', { destination, days, budget });
+    stream.send({ type: 'complete', data: parsed });
+  } catch (parseError) {
+    logger.warn('AI 返回 JSON 解析失败，返回原始内容', { destination, error: parseError.message });
+    stream.send({ type: 'complete', raw: full });
+  }
+  stream.end();
 });
 
 router.post('/chat', async (req, res) => {

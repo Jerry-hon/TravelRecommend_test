@@ -13,9 +13,18 @@ class PlanService {
       return { success: false, error: '未登录或用户不存在' };
     }
 
+    const planJson = JSON.stringify(planData);
+    const existing = db.prepare(
+      'SELECT id FROM travel_plans WHERE user_id = ? AND destination = ? AND budget = ? AND days = ? AND plan_data = ?'
+    ).get(userId, destination, budget, days, planJson);
+
+    if (existing) {
+      return { success: true, data: { id: existing.id } };
+    }
+
     const result = db.prepare(
       'INSERT INTO travel_plans (user_id, destination, budget, days, plan_data) VALUES (?, ?, ?, ?, ?)'
-    ).run(userId, destination, budget, days, JSON.stringify(planData));
+    ).run(userId, destination, budget, days, planJson);
 
     return {
       success: true,
