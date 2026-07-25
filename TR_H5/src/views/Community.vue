@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast, showConfirmDialog } from 'vant'
 import { postsGet, postsPost } from '../utils/request'
@@ -11,6 +11,20 @@ const active = ref(2)
 const isLoading = ref(false)
 const isLogin = ref(false)
 const currentUserId = ref(null)
+
+const getAvatarColor = (index) => {
+    const colors = [
+        'linear-gradient(135deg, #ff6b35, #f7931e)',
+        'linear-gradient(135deg, #667eea, #764ba2)',
+        'linear-gradient(135deg, #2ecc71, #27ae60)',
+        'linear-gradient(135deg, #e74c3c, #c0392b)',
+        'linear-gradient(135deg, #3498db, #2980b9)',
+        'linear-gradient(135deg, #f39c12, #e67e22)',
+        'linear-gradient(135deg, #1abc9c, #16a085)',
+        'linear-gradient(135deg, #9b59b6, #8e44ad)',
+    ]
+    return colors[index % colors.length]
+}
 
 // 帖子列表
 const posts = ref([])
@@ -142,7 +156,6 @@ const submitReply = async () => {
         if (res.success) {
             showToast('回复成功')
             replyContent.value = ''
-            // 刷新详情
             const detailRes = await postsGet(`detail/${currentPost.value.id}`)
             if (detailRes.success) {
                 currentPost.value = detailRes.data
@@ -192,7 +205,7 @@ const deleteReply = async (reply) => {
 }
 
 const formatTime = (time) => {
-    const d = new Date(time.replace(' ', 'T') + 'Z')
+    const d = new Date(time)
     const now = new Date()
     const diff = now - d
     if (diff < 60000) return '刚刚'
@@ -209,35 +222,62 @@ const onChange = (event) => {
 <template>
     <div class="page-container">
         <div class="page-header">
-            <van-nav-bar title="社区" right-text="发布" @click-right="openCreate" />
+            <van-nav-bar title="旅行社区">
+                <template #right>
+                    <van-icon name="add-o" size="22" color="#fff" @click="openCreate" style="cursor: pointer;" />
+                </template>
+            </van-nav-bar>
         </div>
-        <div class="page-content" style="padding: 10px; flex: 1; overflow-y: auto; padding-bottom: 60px;">
+
+        <div class="page-content">
             <!-- 加载中 -->
-            <van-loading v-if="isLoading" size="32px" vertical style="margin-top: 80px;">加载中...</van-loading>
+            <van-loading v-if="isLoading" size="32px" vertical style="margin-top: 80px;" color="#ff6b35">
+                加载中...
+            </van-loading>
 
             <!-- 空状态 -->
-            <van-empty v-else-if="posts.length === 0" description="暂无帖子，快来发布第一条吧" />
+            <div v-else-if="posts.length === 0" class="empty-state">
+                <span class="empty-state-icon">📝</span>
+                <div style="font-size: 16px; color: #666; margin-bottom: 8px;">暂无帖子</div>
+                <div style="font-size: 13px; color: #999; margin-bottom: 20px;">快来分享你的旅行经历吧</div>
+                <van-button type="primary" round size="small" class="btn-gradient" @click="openCreate">
+                    发布第一条帖子
+                </van-button>
+            </div>
 
             <!-- 帖子列表 -->
             <template v-else>
                 <div
-                    v-for="post in posts"
+                    v-for="(post, index) in posts"
                     :key="post.id"
-                    class="post-card"
+                    class="post-card card"
+                    :style="{ animationDelay: `${index * 0.05}s`, animation: 'fadeInUp 0.4s ease-out backwards' }"
                     @click="openDetail(post)"
                 >
-                    <div class="post-card-title">{{ post.title }}</div>
+                    <div class="post-card-header">
+                        <div class="post-avatar" :style="{ background: getAvatarColor(index) }">
+                            {{ (post.author_name || '?')[0] }}
+                        </div>
+                        <div class="post-meta">
+                            <div class="post-card-title">{{ post.title }}</div>
+                            <div class="post-card-meta-row">
+                                <span class="time-text">{{ formatTime(post.created_at) }}</span>
+                                <span v-if="post.reply_count > 0" class="tag">{{ post.reply_count }} 回复</span>
+                            </div>
+                        </div>
+                    </div>
                     <div class="post-card-content">{{ post.content }}</div>
-                    <div class="post-card-time">{{ formatTime(post.created_at) }}</div>
                 </div>
 
                 <!-- 加载更多 -->
-                <div style="text-align: center; padding: 16px;" v-if="hasMore" @click="loadMore">
-                    <van-loading v-if="loadingMore" size="20px">加载中...</van-loading>
-                    <van-button v-else size="small" plain type="primary">加载更多</van-button>
+                <div style="text-align: center; padding: 20px;" v-if="hasMore">
+                    <van-loading v-if="loadingMore" size="20px" color="#ff6b35">加载中...</van-loading>
+                    <van-button v-else size="small" plain round type="primary" @click="loadMore">
+                        加载更多
+                    </van-button>
                 </div>
-                <div style="text-align: center; padding: 16px; color: #999; font-size: 13px;" v-else-if="posts.length > 0">
-                    没有更多了
+                <div v-else-if="posts.length > 0" class="time-text" style="text-align: center; padding: 16px;">
+                    — 没有更多了 —
                 </div>
             </template>
         </div>
@@ -255,25 +295,32 @@ const onChange = (event) => {
         <van-popup
             v-model:show="showCreate"
             position="bottom"
-            style="height: 80%; border-radius: 16px 16px 0 0;"
+            :style="{ height: '80%', borderRadius: '16px 16px 0 0' }"
+            safe-area-inset-bottom
         >
-            <div style="padding: 16px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                    <span style="font-size: 18px; font-weight: bold;">发布帖子</span>
-                    <van-icon name="cross" size="20" @click="showCreate = false" />
+            <div style="padding: 16px; height: 100%; display: flex; flex-direction: column;">
+                <div class="popup-header">
+                    <van-icon name="cross" size="22" @click="showCreate = false" />
+                    <span class="popup-title">发布帖子</span>
+                    <div style="width: 22px;"></div>
                 </div>
                 <van-field
                     v-model="newTitle"
                     label="标题"
-                    placeholder="请输入标题"
-                    style="margin-bottom: 10px;"
+                    placeholder="给你的帖子起个标题吧"
+                    maxlength="50"
+                    show-word-limit
+                    class="rounded-field"
                 />
                 <van-field
                     v-model="newContent"
                     type="textarea"
                     rows="6"
-                    placeholder="说点什么吧..."
+                    placeholder="分享你的旅行故事..."
                     autosize
+                    maxlength="500"
+                    show-word-limit
+                    style="flex: 1;"
                 />
                 <van-button
                     type="primary"
@@ -281,7 +328,8 @@ const onChange = (event) => {
                     round
                     :loading="isSubmitting"
                     @click="submitPost"
-                    style="margin-top: 20px;"
+                    class="btn-gradient"
+                    style="margin-top: 16px;"
                 >发布</van-button>
             </div>
         </van-popup>
@@ -290,55 +338,74 @@ const onChange = (event) => {
         <van-popup
             v-model:show="showDetail"
             position="bottom"
-            style="height: 85%; border-radius: 16px 16px 0 0; display: flex; flex-direction: column;"
+            :style="{ height: '85%', borderRadius: '16px 16px 0 0' }"
+            safe-area-inset-bottom
         >
-            <div v-if="currentPost" style="display: flex; flex-direction: column; height: 100%;">
+            <div v-if="currentPost" class="detail-container">
                 <!-- 详情头部 -->
-                <div style="padding: 16px; border-bottom: 1px solid #f0f0f0; flex-shrink: 0;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <span style="font-size: 18px; font-weight: bold;">{{ currentPost.title }}</span>
-                        <van-icon name="cross" size="20" @click="showDetail = false" />
+                <div class="detail-header">
+                    <div class="detail-header-row">
+                        <span class="detail-title">{{ currentPost.title }}</span>
+                        <van-icon name="cross" size="22" @click="showDetail = false" />
                     </div>
-                    <div style="color: #999; font-size: 12px;">{{ formatTime(currentPost.created_at) }}</div>
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <span class="time-text">{{ formatTime(currentPost.created_at) }}</span>
+                        <van-icon
+                            v-if="currentPost.user_id === currentUserId"
+                            name="delete-o"
+                            size="18"
+                            color="#ee0a24"
+                            @click="deletePost(currentPost)"
+                        />
+                    </div>
                 </div>
 
-                <!-- 内容区域（可滚动） -->
-                <div style="flex: 1; overflow-y: auto; padding: 16px;">
-                    <div style="line-height: 1.8; white-space: pre-wrap; margin-bottom: 20px;">{{ currentPost.content }}</div>
+                <!-- 内容区域 -->
+                <div class="detail-body">
+                    <div class="detail-content">{{ currentPost.content }}</div>
 
                     <!-- 回复列表 -->
                     <div v-if="currentPost.replies && currentPost.replies.length > 0">
-                        <div style="font-size: 15px; font-weight: bold; margin-bottom: 12px;">回复 ({{ currentPost.replies.length }})</div>
+                        <div class="card-title" style="margin-bottom: 12px;">回复 ({{ currentPost.replies.length }})</div>
                         <div
                             v-for="reply in currentPost.replies"
                             :key="reply.id"
-                            style="padding: 12px; background: #f7f8fa; border-radius: 8px; margin-bottom: 8px;"
+                            class="reply-item"
                         >
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                                <span style="color: #999; font-size: 12px;">{{ formatTime(reply.created_at) }}</span>
+                            <div class="reply-header">
+                                <span class="time-text">{{ formatTime(reply.created_at) }}</span>
                                 <van-icon
                                     v-if="reply.user_id === currentUserId"
                                     name="delete-o"
-                                    size="16"
+                                    size="14"
                                     color="#999"
                                     @click="deleteReply(reply)"
                                 />
                             </div>
-                            <div style="line-height: 1.6;">{{ reply.content }}</div>
+                            <div class="reply-content">{{ reply.content }}</div>
                         </div>
                     </div>
-                    <div v-else style="text-align: center; color: #999; padding: 30px 0;">暂无回复</div>
+                    <div v-else class="empty-state" style="padding: 40px 20px;">
+                        <span class="empty-state-icon">💬</span>
+                        <div style="font-size: 14px; color: #999;">暂无回复，来说点什么吧</div>
+                    </div>
                 </div>
 
-                <!-- 底部操作栏 -->
-                <div style="padding: 10px 16px; border-top: 1px solid #f0f0f0; flex-shrink: 0; display: flex; align-items: center; gap: 10px;">
+                <!-- 底部回复栏 -->
+                <div class="reply-bar">
                     <van-field
                         v-model="replyContent"
                         placeholder="写回复..."
-                        style="flex: 1; background: #f7f8fa; border-radius: 20px; padding: 0 12px;"
                         :border="false"
+                        class="reply-input"
                     />
-                    <van-button size="small" type="primary" round :loading="isReplying" @click="submitReply">发送</van-button>
+                    <van-button 
+                        size="small" 
+                        round 
+                        :loading="isReplying" 
+                        @click="submitReply"
+                        class="send-btn"
+                    >发送</van-button>
                 </div>
             </div>
         </van-popup>
@@ -346,26 +413,54 @@ const onChange = (event) => {
 </template>
 
 <style scoped>
-.page-container {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
+/* 帖子卡片 */
+.post-card {
+    padding: 14px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    animation: fadeInUp 0.4s ease-out backwards;
 }
 
-.post-card {
-    background: #fff;
-    padding: 14px;
-    border-radius: 10px;
+.post-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
     margin-bottom: 10px;
+}
+
+.post-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 700;
+    font-size: 16px;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.post-meta {
+    flex: 1;
+    min-width: 0;
 }
 
 .post-card-title {
     font-size: 16px;
-    font-weight: bold;
-    margin-bottom: 8px;
+    font-weight: 700;
+    color: #333;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    margin-bottom: 4px;
+}
+
+.post-card-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .post-card-content {
@@ -376,11 +471,113 @@ const onChange = (event) => {
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 3;
     overflow: hidden;
+    padding-left: 50px;
+}
+
+/* 弹窗头部 */
+.popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.popup-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #333;
+}
+
+/* 详情面板 */
+.detail-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.detail-header {
+    padding: 16px;
+    border-bottom: 1px solid #f0f0f0;
+    flex-shrink: 0;
+}
+
+.detail-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 8px;
 }
 
-.post-card-time {
-    font-size: 12px;
-    color: #999;
+.detail-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #333;
+}
+
+.detail-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+}
+
+.detail-content {
+    line-height: 1.8;
+    white-space: pre-wrap;
+    font-size: 15px;
+    color: #333;
+    margin-bottom: 24px;
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 12px;
+}
+
+/* 回复项 */
+.reply-item {
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    margin-bottom: 8px;
+}
+
+.reply-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.reply-content {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #444;
+}
+
+/* 回复栏 */
+.reply-bar {
+    padding: 10px 16px;
+    border-top: 1px solid #f0f0f0;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #fff;
+}
+
+.reply-input {
+    background: #f0f2f5;
+    border-radius: 20px;
+    padding: 0 12px;
+    flex: 1;
+}
+
+.reply-input :deep(.van-field__control) {
+    font-size: 14px;
+}
+
+.send-btn {
+    background: linear-gradient(135deg, #ff6b35, #f7931e) !important;
+    border: none !important;
+    color: #fff !important;
+    font-weight: 600;
 }
 </style>

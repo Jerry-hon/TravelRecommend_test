@@ -36,9 +36,7 @@ const onTouchStart = (plan) => {
                 savedPlans.value = savedPlans.value.filter(p => p.id !== plan.id)
                 showToast('已删除')
             }
-        } catch {
-            
-        }
+        } catch {}
     }, 600)
 }
 
@@ -47,10 +45,9 @@ const onTouchEnd = () => {
 }
 
 const onChange = (event) => {
-  active.value = event.detail
+    active.value = event.detail
 }
 
-//检查是否已登录
 onMounted(async () => {
     const savedToken = localStorage.getItem('token')
     if (!savedToken) return
@@ -149,87 +146,265 @@ const logout = () => {
     email.value = ''
     sms.value = ''
     nickname.value = ''
+    savedPlans.value = []
+    myPosts.value = []
     showToast('已退出登录')
 }
-
 </script>
 
 <template>
     <div class="page-container">
         <div class="page-header">
-            <van-nav-bar left-arrow="true" left-text="返回" @click-left="goBack" title="个人" />
+            <van-nav-bar title="个人中心" />
         </div>
-        <div class="page-content" style="margin-top: 10px;">
-            <div v-if="!isLogin" class="login-container">
-                <van-cell-group style="margin-top: 10px;">
-                    <van-cell @click="showToast('/login')" title="请使用邮箱登录或注册"/>
-                    <van-field v-model="email" label="邮箱" placeholder="请输入邮箱" />
-                        <van-field
-                            v-model="sms"
-                            center
-                            clearable
-                            label="验证码"
-                            placeholder="请输入验证码"
-                        >
-                            <template #button>
-                            <van-button size="small" type="primary" @click="sendSms" :disabled="cooldown > 0">
+
+        <div class="page-content">
+            <!-- 未登录 -->
+            <div v-if="!isLogin">
+                <!-- 欢迎卡片 -->
+                <div class="welcome-card">
+                    <div class="welcome-avatar">🧳</div>
+                    <div class="welcome-text">登录后体验完整功能</div>
+                    <div class="welcome-sub">保存行程 · 发帖互动 · 收藏攻略</div>
+                </div>
+
+                <div class="card">
+                    <van-field 
+                        v-model="email" 
+                        label="邮箱" 
+                        placeholder="请输入邮箱"
+                        left-icon="envelop-o"
+                        class="rounded-field"
+                    />
+                    <van-field
+                        v-model="sms"
+                        center
+                        clearable
+                        label="验证码"
+                        placeholder="请输入验证码"
+                        left-icon="shield-o"
+                    >
+                        <template #button>
+                            <van-button 
+                                size="small" 
+                                type="primary" 
+                                round
+                                @click="sendSms" 
+                                :disabled="cooldown > 0"
+                            >
                                 {{ cooldown > 0 ? cooldown + 's' : '发送验证码' }}
                             </van-button>
-                            </template>
+                        </template>
                     </van-field>
-                </van-cell-group>
-                <van-button style="width: 90%; margin: 10px auto; display: block;" type="primary" @click="login">登录/注册</van-button>
+
+                    <van-button 
+                        type="primary" 
+                        block 
+                        round
+                        class="btn-gradient"
+                        style="margin-top: 16px;"
+                        @click="login"
+                    >登录 / 注册</van-button>
+                </div>
             </div>
-            <div v-if="isLogin" class="user-info" style="margin-top: 10px;">
-                <van-cell-group>
-                    <van-cell title="用户信息" />
-                    <van-cell title="邮箱" :value="nickname || '未设置'" />
-                </van-cell-group>
-            </div>
-            <div v-if="isLogin" class="saved-plans" style="margin-top: 10px;">
-                <van-cell-group>
-                    <van-cell title="已保存的规划方案" />
-                    <van-cell 
-                        v-for="plan in savedPlans" 
-                        :key="plan.id" 
-                        :title="`${plan.destination} · ${plan.days}日游`" 
-                        :label="`预算：${plan.budget}  |  ${new Date(plan.createdAt).toLocaleDateString()}`"
-                        is-link 
-                        arrow-direction="right"
+
+            <!-- 已登录 -->
+            <div v-if="isLogin">
+                <!-- 用户信息卡片 -->
+                <div class="user-card">
+                    <div class="user-avatar">
+                        {{ (nickname || '?')[0].toUpperCase() }}
+                    </div>
+                    <div class="user-info-right">
+                        <div class="user-name">{{ nickname || '未设置' }}</div>
+                        <div class="user-email">{{ email || '' }}</div>
+                    </div>
+                    <van-icon name="setting-o" size="22" color="#999" />
+                </div>
+
+                <!-- 保存的方案 -->
+                <div class="card">
+                    <div class="card-title">已保存的规划方案</div>
+                    <div
+                        v-for="plan in savedPlans"
+                        :key="plan.id"
+                        class="plan-item"
                         @click="router.push({ name: 'detail', query: { planId: plan.id } })"
                         @touchstart="onTouchStart(plan)"
                         @touchend="onTouchEnd"
                         @touchmove="onTouchEnd"
                         @touchcancel="onTouchEnd"
-                    />
-                    <van-cell v-if="savedPlans.length === 0" title="暂无保存的方案" />
-                </van-cell-group>
-                
-                <van-cell-group style="margin-top: 10px;">
-                    <van-cell title="我的发帖记录" />
-                    <van-cell 
-                        v-for="post in myPosts" 
-                        :key="post.id" 
-                        :title="post.title" 
-                        :label="post.content.length > 40 ? post.content.slice(0, 40) + '...' : post.content"
-                    />
-                    <van-cell v-if="myPosts.length === 0" title="暂无发帖记录" />
-                </van-cell-group>
+                    >
+                        <div class="plan-dest">{{ plan.destination }} · {{ plan.days }}日游</div>
+                        <div class="plan-meta">
+                            <span class="tag">预算 {{ plan.budget }}</span>
+                            <span class="time-text">{{ new Date(plan.createdAt).toLocaleDateString() }}</span>
+                        </div>
+                        <van-icon name="arrow" size="16" color="#ccc" style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%);" />
+                    </div>
+                    <div v-if="savedPlans.length === 0" class="time-text" style="text-align: center; padding: 20px 0;">
+                        暂无保存的方案
+                    </div>
+                </div>
 
+                <!-- 发帖记录 -->
+                <div class="card">
+                    <div class="card-title">我的发帖记录</div>
+                    <div
+                        v-for="post in myPosts"
+                        :key="post.id"
+                        class="post-record"
+                    >
+                        <div class="post-record-title">{{ post.title }}</div>
+                        <div class="post-record-content">{{ post.content.length > 40 ? post.content.slice(0, 40) + '...' : post.content }}</div>
+                    </div>
+                    <div v-if="myPosts.length === 0" class="time-text" style="text-align: center; padding: 20px 0;">
+                        暂无发帖记录
+                    </div>
+                </div>
+
+                <!-- 退出登录 -->
                 <van-button 
-                    style="width: 90%; margin: 20px auto; display: block;" 
                     type="danger" 
+                    block 
+                    round
+                    style="margin-top: 20px; box-shadow: 0 4px 15px rgba(238, 10, 36, 0.15);"
                     @click="logout"
                 >退出登录</van-button>
             </div>
         </div>
+
         <div class="page-tabbar">
             <van-tabbar v-model="active" @change="onChange">
                 <van-tabbar-item icon="home-o" to="/home">首页</van-tabbar-item>
                 <van-tabbar-item icon="chat" to="/chat">聊天</van-tabbar-item>
                 <van-tabbar-item icon="friends-o" to="/community">社区</van-tabbar-item>
-                <van-tabbar-item icon="user-o" to="/profile">个人</van-tabbar-item>     
+                <van-tabbar-item icon="user-o" to="/profile">个人</van-tabbar-item>
             </van-tabbar>
         </div>
     </div>
 </template>
+
+<style scoped>
+/* 欢迎卡片 */
+.welcome-card {
+    background: var(--travel-gradient);
+    border-radius: 16px;
+    padding: 30px 20px;
+    text-align: center;
+    color: #fff;
+    margin-bottom: 16px;
+    box-shadow: 0 8px 25px rgba(255, 107, 53, 0.25);
+}
+
+.welcome-avatar {
+    font-size: 48px;
+    margin-bottom: 12px;
+}
+
+.welcome-text {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.welcome-sub {
+    font-size: 13px;
+    opacity: 0.85;
+}
+
+/* 用户卡片 */
+.user-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: #fff;
+    border-radius: 16px;
+    padding: 20px 16px;
+    margin-bottom: 16px;
+    box-shadow: var(--card-shadow);
+}
+
+.user-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--travel-gradient);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 24px;
+    font-weight: 700;
+    box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+}
+
+.user-info-right {
+    flex: 1;
+}
+
+.user-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 4px;
+}
+
+.user-email {
+    font-size: 13px;
+    color: #999;
+}
+
+/* 方案项 */
+.plan-item {
+    position: relative;
+    padding: 14px 40px 14px 0;
+    border-bottom: 1px solid #f5f5f5;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.plan-item:last-child {
+    border-bottom: none;
+}
+
+.plan-item:active {
+    background: #f8f9fa;
+}
+
+.plan-dest {
+    font-size: 15px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 6px;
+}
+
+.plan-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* 发帖记录 */
+.post-record {
+    padding: 12px 0;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.post-record:last-child {
+    border-bottom: none;
+}
+
+.post-record-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 4px;
+}
+
+.post-record-content {
+    font-size: 12px;
+    color: #999;
+    line-height: 1.5;
+}
+</style>

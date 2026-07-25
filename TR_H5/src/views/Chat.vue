@@ -18,7 +18,7 @@ const goBack = () => {
 }
 
 const onChange = (event) => {
-  active.value = event.detail
+    active.value = event.detail
 }
 
 const scrollToBottom = async () => {
@@ -42,7 +42,6 @@ const sendMessage = () => {
     const msg = inputMessage.value.trim()
     if (!msg || isStreaming.value) return
 
-    // 提取最近 10 轮对话历史（20 条消息）
     const history = messages.value.slice(-20).map(m => ({
         role: m.role,
         content: m.content
@@ -67,7 +66,6 @@ const fetchAIResponse = (query, history = []) => {
         role: 'assistant',
         content: '',
     })
-    // 获取响应式代理引用，确保视图更新
     const idx = messages.value.length - 1
     scrollToBottom()
 
@@ -100,26 +98,49 @@ const fetchAIResponse = (query, history = []) => {
 <template>
     <div class="page-container chat-page">
         <div class="page-header">
-            <van-nav-bar title="聊天" :left-arrow="true" left-text="返回" @click-left="goBack" right-text="重置聊天" @click-right="resetChat" />
+            <van-nav-bar 
+                title="AI 旅行助手" 
+                :left-arrow="true" 
+                left-text="返回" 
+                @click-left="goBack" 
+            >
+                <template #right>
+                    <van-icon name="replay" size="20" color="#fff" @click="resetChat" style="cursor: pointer;" />
+                </template>
+            </van-nav-bar>
         </div>
 
         <div class="chat-body">
-            <div v-if="messages.length === 0"  class="chat-container">
-                <van-empty description="和AI聊天吧" style="margin-top: 120px;" />
-                <div class="chat-problems" style="margin-top: 20px;">
-                    <div class="chat-problems-title" style="text-align: center;">常见问题</div>
-                    <van-tag @click="handleClick(q)"  v-for="q in quickQuestions" :key="q" size="medium" type="primary" mark="tag" style="margin: 10px;">
+            <!-- 空状态 -->
+            <div v-if="messages.length === 0" class="chat-welcome">
+                <div class="welcome-icon">
+                    <span class="welcome-emoji">✈️</span>
+                </div>
+                <div class="welcome-title">AI 旅行助手</div>
+                <div class="welcome-desc">问我任何关于旅行的问题，我会为您解答</div>
+                
+                <div class="quick-questions">
+                    <div 
+                        v-for="q in quickQuestions" 
+                        :key="q"
+                        class="quick-tag"
+                        @click="handleClick(q)"
+                    >
                         {{ q }}
-                    </van-tag>
+                    </div>
                 </div>
             </div>
+
+            <!-- 消息列表 -->
             <div v-else class="message-list">
                 <div
                     v-for="msg in messages"
                     :key="msg.id"
                     :class="['msg-row', msg.role === 'user' ? 'msg-row--right' : 'msg-row--left']"
                 >
-                    <div v-if="msg.role === 'assistant'" class="msg-avatar msg-avatar--ai">AI</div>
+                    <div v-if="msg.role === 'assistant'" class="msg-avatar msg-avatar--ai">
+                        <span class="avatar-text">AI</span>
+                    </div>
 
                     <div class="msg-bubble-wrapper">
                         <div
@@ -129,7 +150,9 @@ const fetchAIResponse = (query, history = []) => {
                         </div>
                     </div>
 
-                    <div v-if="msg.role === 'user'" class="msg-avatar msg-avatar--user">我</div>
+                    <div v-if="msg.role === 'user'" class="msg-avatar msg-avatar--user">
+                        <span class="avatar-text">我</span>
+                    </div>
                 </div>
 
                 <div v-if="isStreaming" class="typing-dots">
@@ -139,17 +162,27 @@ const fetchAIResponse = (query, history = []) => {
         </div>
         
         <div class="chat-bottom">
-            <div class="chat-input">
-               <van-field
-                    type="text"
+            <div class="chat-input-bar">
+                <van-field
                     v-model="inputMessage"
-                    placeholder="请输入问题"
-               >
+                    type="text"
+                    placeholder="输入您的问题..."
+                    :border="false"
+                    class="chat-field"
+                >
                     <template #button>
-                        <van-button @click="sendMessage" :disabled="!inputMessage.trim()" type="primary" size="small">发送</van-button>
+                        <van-button 
+                            @click="sendMessage" 
+                            :disabled="!inputMessage.trim()" 
+                            type="primary" 
+                            size="small" 
+                            round
+                            class="send-btn"
+                        >发送</van-button>
                     </template>
                 </van-field>
             </div>
+
             <van-tabbar v-model="active" @change="onChange" style="position: static;">
                 <van-tabbar-item icon="home-o" to="/home">首页</van-tabbar-item>
                 <van-tabbar-item icon="chat" to="/chat">聊天</van-tabbar-item>
@@ -171,12 +204,75 @@ const fetchAIResponse = (query, history = []) => {
 .chat-body {
     flex: 1;
     overflow-y: auto;
+    background: #f0f2f5;
 }
 
-.chat-bottom {
-    flex-shrink: 0;
+/* 欢迎区域 */
+.chat-welcome {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 60px 30px;
+    animation: fadeInUp 0.5s ease-out;
 }
 
+.welcome-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ff6b35, #f7931e);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 25px rgba(255, 107, 53, 0.3);
+    margin-bottom: 20px;
+}
+
+.welcome-emoji {
+    font-size: 36px;
+}
+
+.welcome-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.welcome-desc {
+    font-size: 15px;
+    color: #999;
+    margin-bottom: 30px;
+}
+
+.quick-questions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+}
+
+.quick-tag {
+    padding: 10px 18px;
+    background: #fff;
+    border-radius: 20px;
+    font-size: 14px;
+    color: #ff6b35;
+    border: 1px solid rgba(255, 107, 53, 0.2);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.quick-tag:active {
+    background: linear-gradient(135deg, #ff6b35, #f7931e);
+    color: #fff;
+    transform: scale(0.95);
+    border-color: transparent;
+}
+
+/* 消息列表 */
 .message-list {
     padding: 12px 10px;
 }
@@ -185,6 +281,7 @@ const fetchAIResponse = (query, history = []) => {
     display: flex;
     align-items: flex-start;
     margin-bottom: 16px;
+    animation: fadeInUp 0.3s ease-out;
 }
 
 .msg-row--left {
@@ -197,25 +294,29 @@ const fetchAIResponse = (query, history = []) => {
 }
 
 .msg-avatar {
-    width: 38px;
-    height: 38px;
-    border-radius: 6px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 12px;
-    font-weight: bold;
-    color: #fff;
     flex-shrink: 0;
     margin: 0 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .msg-avatar--ai {
-    background: #07c160;
+    background: linear-gradient(135deg, #ff6b35, #f7931e);
 }
 
 .msg-avatar--user {
-    background: #1989fa;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+}
+
+.avatar-text {
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
 }
 
 .msg-bubble-wrapper {
@@ -223,39 +324,72 @@ const fetchAIResponse = (query, history = []) => {
 }
 
 .msg-bubble {
-    padding: 10px 13px;
-    border-radius: 6px;
+    padding: 12px 14px;
+    border-radius: 16px;
     position: relative;
     word-break: break-word;
 }
 
 .msg-bubble--user {
-    background: #95ec69;
-    color: #000;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff;
+    border-bottom-right-radius: 4px;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.25);
 }
 
 .msg-bubble--ai {
     background: #fff;
     color: #333;
+    border-bottom-left-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .msg-text {
     font-size: 15px;
-    line-height: 1.55;
+    line-height: 1.6;
     white-space: pre-wrap;
 }
 
+/* 输入栏 */
+.chat-bottom {
+    flex-shrink: 0;
+    background: #fff;
+}
+
+.chat-input-bar {
+    padding: 8px 12px;
+    background: #fff;
+    border-top: 1px solid #eee;
+}
+
+.chat-field {
+    background: #f0f2f5;
+    border-radius: 24px;
+    padding: 4px 12px;
+}
+
+.chat-field :deep(.van-field__control) {
+    font-size: 15px;
+}
+
+.send-btn {
+    background: linear-gradient(135deg, #ff6b35, #f7931e) !important;
+    border: none !important;
+    font-weight: 600;
+}
+
+/* 打字动画 */
 .typing-dots {
     display: flex;
     align-items: center;
-    gap: 4px;
-    padding: 8px 16px;
+    gap: 5px;
+    padding: 8px 20px;
 }
 
 .typing-dots span {
-    width: 7px;
-    height: 7px;
-    background: #999;
+    width: 8px;
+    height: 8px;
+    background: linear-gradient(135deg, #ff6b35, #f7931e);
     border-radius: 50%;
     animation: dotBounce 1.4s infinite ease-in-out both;
 }
@@ -265,7 +399,7 @@ const fetchAIResponse = (query, history = []) => {
 .typing-dots span:nth-child(3) { animation-delay: 0s; }
 
 @keyframes dotBounce {
-    0%, 80%, 100% { transform: scale(0); }
-    40% { transform: scale(1); }
+    0%, 80%, 100% { transform: scale(0); opacity: 0.3; }
+    40% { transform: scale(1); opacity: 1; }
 }
 </style>

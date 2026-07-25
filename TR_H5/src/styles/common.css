@@ -1,0 +1,226 @@
+/* ===== 全局页面布局 & 旅行主题视觉 ===== */
+
+/* 旅行主题色系 */
+:root {
+  --travel-primary: #ff6b35;
+  --travel-primary-light: #ff8c5a;
+  --travel-gradient: linear-gradient(135deg, #ff6b35 0%, #f7931e 50%, #ffc107 100%);
+  --travel-gradient-warm: linear-gradient(135deg, #ff6b35 0%, #e8456b 100%);
+  --travel-gradient-cool: linear-gradient(135deg, #3498db 0%, #2ecc71 100%);
+  --travel-gradient-purple: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --travel-bg: #f5f5f5;
+  --card-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  --card-shadow-hover: 0 4px 20px rgba(0, 0, 0, 0.12);
+  --card-radius: 12px;
+}
+
+/* 页面容器 */
+.page-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--travel-bg);
+}
+
+/* 页面头部 - 渐变背景 */
+.page-header {
+  flex-shrink: 0;
+  background: var(--travel-gradient);
+}
+
+.page-header .van-nav-bar {
+  background: transparent !important;
+}
+
+.page-header .van-nav-bar__title,
+.page-header .van-nav-bar__text,
+.page-header .van-nav-bar .van-icon {
+  color: #fff !important;
+}
+
+.page-header .van-nav-bar__arrow {
+  color: #fff !important;
+}
+
+.page-header .van-hairline--bottom::after {
+  border-color: transparent !important;
+}
+
+/* 页面内容区 */
+.page-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  padding-bottom: 70px;
+}
+
+/* 通用卡片 */
+.card {
+  background: #fff;
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+  padding: 16px;
+  margin-bottom: 12px;
+  transition: box-shadow 0.3s ease, transform 0.2s ease;
+}
+
+.card:active {
+  transform: scale(0.98);
+}
+
+.card:hover {
+  box-shadow: var(--card-shadow-hover);
+}
+
+/* 卡片标题 */
+.card-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 12px;
+  padding-left: 10px;
+  border-left: 3px solid var(--travel-primary);
+  line-height: 1.2;
+}
+
+/* 底部 Tabbar */
+.page-tabbar {
+  flex-shrink: 0;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+}
+
+.page-tabbar .van-tabbar {
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.06);
+}
+
+.page-tabbar .van-tabbar-item--active {
+  color: var(--travel-primary);
+}
+
+/* 圆角输入框 */
+.rounded-field {
+  background: #f5f5f5 !important;
+  border-radius: 10px !important;
+  margin-bottom: 10px;
+}
+
+/* 渐变按钮 */
+.btn-gradient {
+  border: none !important;
+  background: var(--travel-gradient) !important;
+  color: #fff !important;
+  border-radius: 24px !important;
+  font-weight: 600 !important;
+  box-shadow: 0 4px 15px rgba(255, 107, 53, 0.35) !important;
+  transition: all 0.3s ease !important;
+}
+
+.btn-gradient:active {
+  transform: scale(0.96);
+  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.3) !important;
+}
+
+/* 页面过渡动画 */
+.page-enter-active {
+  animation: pageIn 0.3s ease-out;
+}
+
+.page-leave-active {
+  animation: pageOut 0.2s ease-in;
+}
+
+@keyframes pageIn {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pageOut {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+}
+
+/* 淡入动画 */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* 脉冲动画 */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* 骨架屏占位 */
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* 通用空状态美化 */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: #999;
+}
+
+.empty-state-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+  opacity: 0.4;
+}
+
+/* 标签样式 */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  background: rgba(255, 107, 53, 0.1);
+  color: var(--travel-primary);
+}
+
+/* 时间文字 */
+.time-text {
+  font-size: 12px;
+  color: #999;
+}
