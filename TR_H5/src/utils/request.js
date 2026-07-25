@@ -66,7 +66,6 @@ export async function fetchStream(url, data, onChunk, onComplete, onError) {
     }
 }
 
-// 用户相关
 const userRequest = axios.create({
     baseURL: '/api/user',
     timeout: 10000,
@@ -96,7 +95,6 @@ export function userGet(url) {
     return userRequest.get(url)
 }
 
-// 规划方案的处理
 const planRequest = axios.create({
     baseURL: '/api/plan',
     timeout: 10000,
@@ -130,7 +128,6 @@ export function planDelete(id) {
     return planRequest.delete(`/${id}`)
 }
 
-// 社区相关（发帖/回帖）
 const postsRequest = axios.create({
     baseURL: '/api/posts',
     timeout: 10000,

@@ -111,7 +111,6 @@ const fetchAIResponse = (query, history = []) => {
         </div>
 
         <div class="chat-body">
-            <!-- 空状态 -->
             <div v-if="messages.length === 0" class="chat-welcome">
                 <div class="welcome-icon">
                     <span class="welcome-emoji">✈️</span>
@@ -131,7 +130,6 @@ const fetchAIResponse = (query, history = []) => {
                 </div>
             </div>
 
-            <!-- 消息列表 -->
             <div v-else class="message-list">
                 <div
                     v-for="msg in messages"
@@ -207,7 +205,6 @@ const fetchAIResponse = (query, history = []) => {
     background: #f0f2f5;
 }
 
-/* 欢迎区域 */
 .chat-welcome {
     display: flex;
     flex-direction: column;
@@ -272,7 +269,6 @@ const fetchAIResponse = (query, history = []) => {
     border-color: transparent;
 }
 
-/* 消息列表 */
 .message-list {
     padding: 12px 10px;
 }
@@ -350,7 +346,6 @@ const fetchAIResponse = (query, history = []) => {
     white-space: pre-wrap;
 }
 
-/* 输入栏 */
 .chat-bottom {
     flex-shrink: 0;
     background: #fff;
@@ -378,7 +373,6 @@ const fetchAIResponse = (query, history = []) => {
     font-weight: 600;
 }
 
-/* 打字动画 */
 .typing-dots {
     display: flex;
     align-items: center;

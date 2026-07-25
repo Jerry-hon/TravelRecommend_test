@@ -95,7 +95,6 @@ const onChange = (event) => {
     active.value = event.detail
 }
 
-// 根据目的地返回对应渐变色
 const getDestGradient = (dest) => {
     const map = {
         '北京': 'linear-gradient(135deg, #e74c3c, #c0392b)',
@@ -130,13 +129,11 @@ const getDestGradient = (dest) => {
         <div class="page-content">
             <van-notice-bar
                 left-icon="info-o"
-                text="HJY 旅行推荐 · 智能规划您的完美旅程"
-                scrollable
+                text="项目展示"
                 background="#fff3e0"
                 color="#e65100"
             />
 
-            <!-- 规划卡片 -->
             <div class="card" style="margin-top: 10px;">
                 <div class="card-title">旅程规划</div>
 
@@ -182,7 +179,6 @@ const getDestGradient = (dest) => {
                 </van-button>
             </div>
 
-            <!-- 目的地快捷展示 -->
             <div class="card">
                 <div class="card-title">热门目的地</div>
                 <div class="dest-grid">
@@ -253,7 +249,6 @@ const getDestGradient = (dest) => {
     font-weight: 600;
 }
 
-/* Tabbar 占位 */
 .page-container {
     padding-bottom: 50px;
 }

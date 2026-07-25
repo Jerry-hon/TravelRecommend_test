@@ -159,9 +159,7 @@ const logout = () => {
         </div>
 
         <div class="page-content">
-            <!-- 未登录 -->
             <div v-if="!isLogin">
-                <!-- 欢迎卡片 -->
                 <div class="welcome-card">
                     <div class="welcome-avatar">🧳</div>
                     <div class="welcome-text">登录后体验完整功能</div>
@@ -208,9 +206,7 @@ const logout = () => {
                 </div>
             </div>
 
-            <!-- 已登录 -->
             <div v-if="isLogin">
-                <!-- 用户信息卡片 -->
                 <div class="user-card">
                     <div class="user-avatar">
                         {{ (nickname || '?')[0].toUpperCase() }}
@@ -222,7 +218,6 @@ const logout = () => {
                     <van-icon name="setting-o" size="22" color="#999" />
                 </div>
 
-                <!-- 保存的方案 -->
                 <div class="card">
                     <div class="card-title">已保存的规划方案</div>
                     <div
@@ -247,7 +242,6 @@ const logout = () => {
                     </div>
                 </div>
 
-                <!-- 发帖记录 -->
                 <div class="card">
                     <div class="card-title">我的发帖记录</div>
                     <div
@@ -263,7 +257,6 @@ const logout = () => {
                     </div>
                 </div>
 
-                <!-- 退出登录 -->
                 <van-button 
                     type="danger" 
                     block 
@@ -286,7 +279,6 @@ const logout = () => {
 </template>
 
 <style scoped>
-/* 欢迎卡片 */
 .welcome-card {
     background: var(--travel-gradient);
     border-radius: 16px;
@@ -313,7 +305,6 @@ const logout = () => {
     opacity: 0.85;
 }
 
-/* 用户卡片 */
 .user-card {
     display: flex;
     align-items: center;
@@ -355,7 +346,6 @@ const logout = () => {
     color: #999;
 }
 
-/* 方案项 */
 .plan-item {
     position: relative;
     padding: 14px 40px 14px 0;
@@ -385,7 +375,6 @@ const logout = () => {
     gap: 8px;
 }
 
-/* 发帖记录 */
 .post-record {
     padding: 12px 0;
     border-bottom: 1px solid #f5f5f5;

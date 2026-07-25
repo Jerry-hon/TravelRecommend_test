@@ -288,7 +288,6 @@ code {
   }
 }
 
-/* 修复 Vant4 Toast 与 Popup 样式冲突导致深色模式下 Toast 变白、文字不可见 */
 .van-toast {
   background: rgba(0, 0, 0, 0.7) !important;
   color: #fff !important;

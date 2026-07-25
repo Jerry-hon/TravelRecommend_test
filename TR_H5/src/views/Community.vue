@@ -26,19 +26,16 @@ const getAvatarColor = (index) => {
     return colors[index % colors.length]
 }
 
-// 帖子列表
 const posts = ref([])
 const page = ref(1)
 const hasMore = ref(true)
 const loadingMore = ref(false)
 
-// 发布帖子弹窗
 const showCreate = ref(false)
 const newTitle = ref('')
 const newContent = ref('')
 const isSubmitting = ref(false)
 
-// 帖子详情弹窗
 const showDetail = ref(false)
 const currentPost = ref(null)
 const replyContent = ref('')
@@ -57,7 +54,6 @@ onMounted(async () => {
     fetchPosts()
 })
 
-// 加载帖子列表
 const fetchPosts = async () => {
     if (isLoading.value) return
     isLoading.value = true
@@ -75,7 +71,6 @@ const fetchPosts = async () => {
     }
 }
 
-// 加载更多
 const loadMore = async () => {
     if (loadingMore.value || !hasMore.value) return
     loadingMore.value = true
@@ -93,7 +88,6 @@ const loadMore = async () => {
     }
 }
 
-// 打开发布弹窗
 const openCreate = () => {
     if (!isLogin.value) {
         showToast('请先登录')
@@ -104,7 +98,6 @@ const openCreate = () => {
     showCreate.value = true
 }
 
-// 发布帖子
 const submitPost = async () => {
     if (!newTitle.value.trim()) {
         showToast('请输入标题')
@@ -131,7 +124,6 @@ const submitPost = async () => {
     }
 }
 
-// 打开帖子详情
 const openDetail = async (post) => {
     try {
         const res = await postsGet(`detail/${post.id}`)
@@ -144,7 +136,6 @@ const openDetail = async (post) => {
     }
 }
 
-// 提交回复
 const submitReply = async () => {
     if (!replyContent.value.trim()) {
         showToast('请输入回复内容')
@@ -170,7 +161,6 @@ const submitReply = async () => {
     }
 }
 
-// 删除帖子
 const deletePost = async (post) => {
     try {
         await showConfirmDialog({
@@ -183,10 +173,9 @@ const deletePost = async (post) => {
             showDetail.value = false
             fetchPosts()
         }
-    } catch { /* 用户取消 */ }
+    } catch {}
 }
 
-// 删除回复
 const deleteReply = async (reply) => {
     try {
         await showConfirmDialog({
@@ -201,7 +190,7 @@ const deleteReply = async (reply) => {
                 currentPost.value = detailRes.data
             }
         }
-    } catch { /* 用户取消 */ }
+    } catch {}
 }
 
 const formatTime = (time) => {
@@ -230,12 +219,10 @@ const onChange = (event) => {
         </div>
 
         <div class="page-content">
-            <!-- 加载中 -->
             <van-loading v-if="isLoading" size="32px" vertical style="margin-top: 80px;" color="#ff6b35">
                 加载中...
             </van-loading>
 
-            <!-- 空状态 -->
             <div v-else-if="posts.length === 0" class="empty-state">
                 <span class="empty-state-icon">📝</span>
                 <div style="font-size: 16px; color: #666; margin-bottom: 8px;">暂无帖子</div>
@@ -245,7 +232,6 @@ const onChange = (event) => {
                 </van-button>
             </div>
 
-            <!-- 帖子列表 -->
             <template v-else>
                 <div
                     v-for="(post, index) in posts"
@@ -269,7 +255,6 @@ const onChange = (event) => {
                     <div class="post-card-content">{{ post.content }}</div>
                 </div>
 
-                <!-- 加载更多 -->
                 <div style="text-align: center; padding: 20px;" v-if="hasMore">
                     <van-loading v-if="loadingMore" size="20px" color="#ff6b35">加载中...</van-loading>
                     <van-button v-else size="small" plain round type="primary" @click="loadMore">
@@ -291,14 +276,13 @@ const onChange = (event) => {
             </van-tabbar>
         </div>
 
-        <!-- 发布帖子弹窗 -->
         <van-popup
             v-model:show="showCreate"
             position="bottom"
             :style="{ height: '80%', borderRadius: '16px 16px 0 0' }"
             safe-area-inset-bottom
         >
-            <div style="padding: 16px; height: 100%; display: flex; flex-direction: column;">
+            <div style="padding: 16px 16px 30px; height: 100%; display: flex; flex-direction: column; box-sizing: border-box;">
                 <div class="popup-header">
                     <van-icon name="cross" size="22" @click="showCreate = false" />
                     <span class="popup-title">发布帖子</span>
@@ -334,7 +318,6 @@ const onChange = (event) => {
             </div>
         </van-popup>
 
-        <!-- 帖子详情弹窗 -->
         <van-popup
             v-model:show="showDetail"
             position="bottom"
@@ -342,7 +325,6 @@ const onChange = (event) => {
             safe-area-inset-bottom
         >
             <div v-if="currentPost" class="detail-container">
-                <!-- 详情头部 -->
                 <div class="detail-header">
                     <div class="detail-header-row">
                         <span class="detail-title">{{ currentPost.title }}</span>
@@ -360,11 +342,9 @@ const onChange = (event) => {
                     </div>
                 </div>
 
-                <!-- 内容区域 -->
                 <div class="detail-body">
                     <div class="detail-content">{{ currentPost.content }}</div>
 
-                    <!-- 回复列表 -->
                     <div v-if="currentPost.replies && currentPost.replies.length > 0">
                         <div class="card-title" style="margin-bottom: 12px;">回复 ({{ currentPost.replies.length }})</div>
                         <div
@@ -391,7 +371,6 @@ const onChange = (event) => {
                     </div>
                 </div>
 
-                <!-- 底部回复栏 -->
                 <div class="reply-bar">
                     <van-field
                         v-model="replyContent"
@@ -413,7 +392,6 @@ const onChange = (event) => {
 </template>
 
 <style scoped>
-/* 帖子卡片 */
 .post-card {
     padding: 14px;
     margin-bottom: 10px;
@@ -474,7 +452,6 @@ const onChange = (event) => {
     padding-left: 50px;
 }
 
-/* 弹窗头部 */
 .popup-header {
     display: flex;
     justify-content: space-between;
@@ -488,7 +465,6 @@ const onChange = (event) => {
     color: #333;
 }
 
-/* 详情面板 */
 .detail-container {
     display: flex;
     flex-direction: column;
@@ -531,7 +507,6 @@ const onChange = (event) => {
     border-radius: 12px;
 }
 
-/* 回复项 */
 .reply-item {
     padding: 12px;
     background: #f8f9fa;
@@ -552,7 +527,6 @@ const onChange = (event) => {
     color: #444;
 }
 
-/* 回复栏 */
 .reply-bar {
     padding: 10px 16px;
     border-top: 1px solid #f0f0f0;

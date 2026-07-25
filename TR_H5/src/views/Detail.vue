@@ -2,18 +2,21 @@
 import { useRouter } from 'vue-router'
 import { onMounted } from 'vue'
 import { reactive, ref } from 'vue'
-import { post } from '../utils/request'
+import { fetchStream } from '../utils/request'
 import { planPost, planGet } from '../utils/request'
 import { showToast } from 'vant'
 
 const router = useRouter()
 const isLoading = ref(true)
+const streamStatus = ref('')
 const activeDays = ref([])
 const activeTimeSlots = reactive({})
 const tripData = ref(null)
 const error = ref('')
+const isSaving = ref(false)
 
 const savePlan = async () => {
+    if (isSaving.value) return
     if (!tripData.value) {
         showToast('暂无数据可保存')
         return
@@ -22,6 +25,7 @@ const savePlan = async () => {
         showToast('请先登录后再保存')
         return
     }
+    isSaving.value = true
     try {
         const res = await planPost('save', {
             destination: tripData.value.destination || formData.destination,
@@ -36,27 +40,64 @@ const savePlan = async () => {
         }
     } catch (err) {
         showToast('保存失败，请稍后重试')
+    } finally {
+        isSaving.value = false
     }
 }
 
-const fetchTravelData = async () => {
+const fetchTravelData = () => {
     isLoading.value = true
     error.value = ''
-    try {
-        const response = await post('/recommend', formData)
-        if (response && response.success) {
-            tripData.value = response.data
-            Object.keys(response.data.plan || {}).forEach(key => {
-                activeTimeSlots[key] = []
-            })
-        } else {
-            error.value = response?.error || '接口返回异常'
+    streamStatus.value = 'AI 正在思考行程...'
+    let fullContent = ''
+
+    fetchStream('recommend', formData,
+        (line) => {
+            if (line.startsWith('event:') || line.startsWith(':')) return
+            if (line.startsWith('data:')) {
+                const jsonStr = line.slice(5).trim()
+                try {
+                    const parsed = JSON.parse(jsonStr)
+                    if (parsed.type === 'chunk') {
+                        fullContent += parsed.content || ''
+                        const len = fullContent.length
+                        if (len < 200) streamStatus.value = 'AI 正在规划路线...'
+                        else if (len < 600) streamStatus.value = '正在生成详细行程...'
+                        else if (len < 1200) streamStatus.value = '正在补充预算明细...'
+                        else streamStatus.value = '正在整理注意事项...'
+                    } else if (parsed.type === 'complete') {
+                        isLoading.value = false
+                        streamStatus.value = ''
+                        if (parsed.data) {
+                            tripData.value = parsed.data
+                            Object.keys(parsed.data.plan || {}).forEach(key => {
+                                activeTimeSlots[key] = []
+                            })
+                        } else if (parsed.raw) {
+                            error.value = '数据解析失败'
+                        }
+                    } else if (parsed.type === 'error') {
+                        throw new Error(parsed.error)
+                    }
+                } catch {
+                }
+            }
+        },
+        () => {
+            if (isLoading.value) {
+                isLoading.value = false
+                streamStatus.value = ''
+                if (!tripData.value) {
+                    error.value = '接口返回异常，请重试'
+                }
+            }
+        },
+        (errMsg) => {
+            isLoading.value = false
+            streamStatus.value = ''
+            error.value = errMsg || '网络请求失败，请检查后端服务'
         }
-    } catch (err) {
-        error.value = '网络请求失败，请检查后端服务'
-    } finally {
-        isLoading.value = false
-    }
+    )
 }
 
 onMounted(async () => {
@@ -139,16 +180,17 @@ const getDayBadgeBg = (key) => {
         </div>
 
         <div class="page-content">
-            <!-- 加载中 -->
             <div v-if="isLoading" class="loading-area">
                 <van-loading size="32px" vertical color="#ff6b35" style="margin-top: 80px;">
-                    正在为您规划行程...
+                    {{ streamStatus || '正在规划行程...' }}
                 </van-loading>
+                <div class="progress-bar">
+                    <div class="progress-bar-inner"></div>
+                </div>
                 <div class="skeleton" style="width: 80%; height: 16px; margin: 24px auto 0; max-width: 300px;"></div>
                 <div class="skeleton" style="width: 60%; height: 16px; margin: 12px auto 0; max-width: 240px;"></div>
             </div>
 
-            <!-- 错误 -->
             <div v-else-if="error">
                 <van-empty image="error" :description="error">
                     <van-button round type="primary" class="btn-gradient" @click="fetchTravelData">
@@ -157,9 +199,7 @@ const getDayBadgeBg = (key) => {
                 </van-empty>
             </div>
 
-            <!-- 行程数据 -->
             <template v-else-if="tripData">
-                <!-- 概览卡片 -->
                 <div class="trip-overview card" :style="{ background: 'linear-gradient(135deg, rgba(255,107,53,0.05), rgba(247,147,30,0.08))' }">
                     <div class="overview-dest">{{ tripData.destination }}</div>
                     <div class="overview-stats">
@@ -175,7 +215,6 @@ const getDayBadgeBg = (key) => {
                     </div>
                 </div>
 
-                <!-- 日程 -->
                 <van-collapse v-model="activeDays" class="days-collapse">
                     <van-collapse-item v-for="(day, key) in tripData.plan" :key="key" :name="key">
                         <template #title>
@@ -244,7 +283,6 @@ const getDayBadgeBg = (key) => {
                     </van-collapse-item>
                 </van-collapse>
 
-                <!-- 预算明细 -->
                 <div class="card" v-if="tripData.pre_trip_budget_table">
                     <div class="card-title">预算明细</div>
                     <div 
@@ -257,24 +295,21 @@ const getDayBadgeBg = (key) => {
                     </div>
                 </div>
 
-                <!-- 注意事项 -->
                 <div class="card" v-if="tripData.notice">
                     <div class="card-title">注意事项</div>
                     <div class="info-text">{{ tripData.notice }}</div>
                 </div>
 
-                <!-- 避坑指南 -->
                 <div class="card" v-if="tripData.avoid">
                     <div class="card-title">避坑指南</div>
                     <div class="info-text">{{ tripData.avoid }}</div>
                 </div>
 
-                <!-- 操作按钮 -->
                 <div class="action-buttons">
                     <van-button type="primary" round :loading="isLoading" @click="fetchTravelData" class="btn-gradient">
                         重新生成
                     </van-button>
-                    <van-button type="default" round @click="savePlan" style="font-weight: 600;">
+                    <van-button type="default" round :loading="isSaving" @click="savePlan" style="font-weight: 600;">
                         保存方案
                     </van-button>
                 </div>
@@ -288,7 +323,29 @@ const getDayBadgeBg = (key) => {
     text-align: center;
 }
 
-/* 概览卡片 */
+.progress-bar {
+    width: 60%;
+    max-width: 280px;
+    height: 4px;
+    background: #e8e8e8;
+    border-radius: 2px;
+    margin: 20px auto 0;
+    overflow: hidden;
+}
+
+.progress-bar-inner {
+    height: 100%;
+    width: 40%;
+    background: var(--travel-gradient);
+    border-radius: 2px;
+    animation: progressSlide 1.8s ease-in-out infinite;
+}
+
+@keyframes progressSlide {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(350%); }
+}
+
 .trip-overview {
     text-align: center;
     border-radius: 16px;
@@ -316,8 +373,8 @@ const getDayBadgeBg = (key) => {
 }
 
 .stat-value {
-    font-size: 28px;
-    font-weight: 800;
+    font-size: 16px;
+    font-weight: 700;
     color: #333;
     line-height: 1;
 }
@@ -334,7 +391,6 @@ const getDayBadgeBg = (key) => {
     background: #e0e0e0;
 }
 
-/* 日程折叠 */
 .days-collapse {
     margin-bottom: 14px;
     border-radius: 12px;
@@ -369,7 +425,6 @@ const getDayBadgeBg = (key) => {
     font-weight: normal;
 }
 
-/* 时段标签 */
 .time-badge {
     display: inline-flex;
     align-items: center;
@@ -395,7 +450,6 @@ const getDayBadgeBg = (key) => {
     background: rgba(52, 152, 219, 0.12);
 }
 
-/* 时段详情 */
 .time-detail {
     padding: 12px;
     border-radius: 10px;
@@ -444,7 +498,6 @@ const getDayBadgeBg = (key) => {
     font-weight: 600;
 }
 
-/* 预算行 */
 .budget-row {
     display: flex;
     justify-content: space-between;
@@ -464,7 +517,6 @@ const getDayBadgeBg = (key) => {
     color: var(--travel-primary);
 }
 
-/* 信息文本 */
 .info-text {
     padding: 4px 0;
     font-size: 14px;
@@ -473,7 +525,6 @@ const getDayBadgeBg = (key) => {
     white-space: pre-wrap;
 }
 
-/* 操作按钮 */
 .action-buttons {
     display: flex;
     gap: 16px;
